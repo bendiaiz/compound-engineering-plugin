@@ -75,6 +75,11 @@ When adding or modifying skills, verify compliance with skill-creator spec:
 - [ ] Use imperative/infinitive form (verb-first instructions)
 - [ ] Avoid second person ("you should") - use objective language ("To accomplish X, do Y")
 
+### AskUserQuestion Usage
+
+- [ ] If the skill uses `AskUserQuestion`, it must include an "Interaction Method" preamble explaining the numbered-list fallback for non-Claude environments
+- [ ] Prefer avoiding `AskUserQuestion` entirely (see `brainstorming/SKILL.md` pattern) for skills intended to run cross-platform
+
 ### Quick Validation Command
 
 ```bash
