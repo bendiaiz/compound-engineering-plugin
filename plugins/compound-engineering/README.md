@@ -7,8 +7,7 @@ AI-powered development tools that get smarter with every use. Make each unit of 
 | Component | Count |
 |-----------|-------|
 | Agents | 29 |
-| Commands | 23 |
-| Skills | 20 |
+| Skills | 42 |
 | MCP Servers | 1 |
 
 ## Agents
