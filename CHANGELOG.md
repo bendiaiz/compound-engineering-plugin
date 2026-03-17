@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Release numbering now follows the repository `v*` tag line. Starting at `v2.34.0`, the root CLI package and this changelog stay on that shared version stream. Older entries below retain the previous `0.x` CLI numbering.
 
+# [2.42.0](https://github.com/EveryInc/compound-engineering-plugin/compare/v2.41.1...v2.42.0) (2026-03-17)
+
+
+### Bug Fixes
+
+* add disable-model-invocation to beta skills and refine descriptions ([72d4b0d](https://github.com/EveryInc/compound-engineering-plugin/commit/72d4b0dfd231d48f63bdf222b07d37ecc5456004))
+* beta skill naming, plan file suffixes, and promotion checklist ([ac53635](https://github.com/EveryInc/compound-engineering-plugin/commit/ac53635737854c5dd30f8ce083d8a6c6cdfbee99))
+* preserve skill-style document-review handoffs ([b2b23dd](https://github.com/EveryInc/compound-engineering-plugin/commit/b2b23ddbd336b1da072ede6a728d2c472c39da80))
+* review fixes — stale refs, skill counts, and validation guidance ([a83e11e](https://github.com/EveryInc/compound-engineering-plugin/commit/a83e11e982e1b5b0b264b6ab63bc74e3a50f7c28))
+
+
+### Features
+
+* add ce:plan-beta and deepen-plan-beta as standalone beta skills ([ad53d3d](https://github.com/EveryInc/compound-engineering-plugin/commit/ad53d3d657ec73712c934b13fa472f8566fbe88f))
+* align ce-plan question tool guidance ([df4c466](https://github.com/EveryInc/compound-engineering-plugin/commit/df4c466b42a225f0f227a307792d387c21944983))
+* rewrite ce:plan to separate planning from implementation ([38a47b1](https://github.com/EveryInc/compound-engineering-plugin/commit/38a47b11cae60c0a0baa308ca7b1617685bcf8cf))
+* teach ce:work to consume decision-first plans ([859ef60](https://github.com/EveryInc/compound-engineering-plugin/commit/859ef601b2908437478c248a204a50b20c832b7e))
+
 ## [2.41.1](https://github.com/EveryInc/compound-engineering-plugin/compare/v2.41.0...v2.41.1) (2026-03-17)
 
 
