@@ -10,18 +10,27 @@ jobs:
   pr-title:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
 
     steps:
       - name: Validate PR title
-        shell: bash
-        run: |
-          title='${{ github.event.pull_request.title }}'
-          pattern='^[a-z]+(\([^)]+\))?(!)?: .+'
-          if ! printf '%s\n' "$title" | grep -Eq "$pattern"; then
-            echo "PR title must use conventional format: type(optional-scope): description"
-            echo "Examples: 'fix: correct release preview', 'feat(coding-tutor): add quiz reset'"
-            exit 1
-          fi
+        uses: amannn/action-semantic-pull-request@v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          requireScope: false
+          types: |
+            feat
+            fix
+            docs
+            refactor
+            chore
+            test
+            ci
+            build
+            perf
+            revert
 
   test:
     runs-on: ubuntu-latest
