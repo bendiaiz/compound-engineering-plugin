@@ -41,6 +41,13 @@ export type MetadataSyncResult = {
   updates: FileUpdate[]
 }
 
+function resolveExpectedVersion(
+  explicitVersion: string | undefined,
+  fallbackVersion: string,
+): string {
+  return explicitVersion ?? fallbackVersion
+}
+
 export async function countMarkdownFiles(root: string): Promise<number> {
   const entries = await fs.readdir(root, { withFileTypes: true })
   let total = 0
@@ -110,10 +117,18 @@ export async function syncReleaseMetadata(options: SyncOptions = {}): Promise<Me
   const codingTutorClaude = await readJson<ClaudePluginManifest>(codingTutorClaudePath)
   const codingTutorCursor = await readJson<CursorPluginManifest>(codingTutorCursorPath)
   const marketplaceClaude = await readJson<MarketplaceManifest>(marketplaceClaudePath)
+  const expectedCompoundVersion = resolveExpectedVersion(
+    versions["compound-engineering"],
+    compoundClaude.version,
+  )
+  const expectedCodingTutorVersion = resolveExpectedVersion(
+    versions["coding-tutor"],
+    codingTutorClaude.version,
+  )
 
   let changed = false
-  if (versions["compound-engineering"] && compoundClaude.version !== versions["compound-engineering"]) {
-    compoundClaude.version = versions["compound-engineering"]
+  if (compoundClaude.version !== expectedCompoundVersion) {
+    compoundClaude.version = expectedCompoundVersion
     changed = true
   }
   if (compoundClaude.description !== compoundDescription) {
@@ -124,8 +139,8 @@ export async function syncReleaseMetadata(options: SyncOptions = {}): Promise<Me
   if (write && changed) await writeJson(compoundClaudePath, compoundClaude)
 
   changed = false
-  if (versions["compound-engineering"] && compoundCursor.version !== versions["compound-engineering"]) {
-    compoundCursor.version = versions["compound-engineering"]
+  if (compoundCursor.version !== expectedCompoundVersion) {
+    compoundCursor.version = expectedCompoundVersion
     changed = true
   }
   if (compoundCursor.description !== compoundDescription) {
@@ -136,16 +151,16 @@ export async function syncReleaseMetadata(options: SyncOptions = {}): Promise<Me
   if (write && changed) await writeJson(compoundCursorPath, compoundCursor)
 
   changed = false
-  if (versions["coding-tutor"] && codingTutorClaude.version !== versions["coding-tutor"]) {
-    codingTutorClaude.version = versions["coding-tutor"]
+  if (codingTutorClaude.version !== expectedCodingTutorVersion) {
+    codingTutorClaude.version = expectedCodingTutorVersion
     changed = true
   }
   updates.push({ path: codingTutorClaudePath, changed })
   if (write && changed) await writeJson(codingTutorClaudePath, codingTutorClaude)
 
   changed = false
-  if (versions["coding-tutor"] && codingTutorCursor.version !== versions["coding-tutor"]) {
-    codingTutorCursor.version = versions["coding-tutor"]
+  if (codingTutorCursor.version !== expectedCodingTutorVersion) {
+    codingTutorCursor.version = expectedCodingTutorVersion
     changed = true
   }
   updates.push({ path: codingTutorCursorPath, changed })
@@ -159,8 +174,8 @@ export async function syncReleaseMetadata(options: SyncOptions = {}): Promise<Me
 
   for (const plugin of marketplaceClaude.plugins) {
     if (plugin.name === "compound-engineering") {
-      if (versions["compound-engineering"] && plugin.version !== versions["compound-engineering"]) {
-        plugin.version = versions["compound-engineering"]
+      if (plugin.version !== expectedCompoundVersion) {
+        plugin.version = expectedCompoundVersion
         changed = true
       }
       if (plugin.description !== `AI-powered development tools that get smarter with every use. Make each unit of engineering work easier than the last. Includes ${await countMarkdownFiles(path.join(root, "plugins", "compound-engineering", "agents"))} specialized agents and ${await countSkillDirectories(path.join(root, "plugins", "compound-engineering", "skills"))} skills.`) {
@@ -169,8 +184,8 @@ export async function syncReleaseMetadata(options: SyncOptions = {}): Promise<Me
       }
     }
 
-    if (plugin.name === "coding-tutor" && versions["coding-tutor"] && plugin.version !== versions["coding-tutor"]) {
-      plugin.version = versions["coding-tutor"]
+    if (plugin.name === "coding-tutor" && plugin.version !== expectedCodingTutorVersion) {
+      plugin.version = expectedCodingTutorVersion
       changed = true
     }
   }
