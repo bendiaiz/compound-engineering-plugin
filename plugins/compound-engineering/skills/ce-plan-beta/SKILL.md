@@ -163,6 +163,7 @@ Look for signals such as:
 - The user explicitly asks for TDD, test-first, or characterization-first work
 - The origin document calls for test-first implementation or exploratory hardening of legacy code
 - Local research shows the target area is legacy, weakly tested, or historically fragile, suggesting characterization coverage before changing behavior
+- The user asks for external delegation, says "use codex", "delegate mode", or mentions token conservation -- add `Execution target: external-delegate` to implementation units that are pure code writing
 
 When the signal is clear, carry it forward silently in the relevant implementation units.
 
@@ -314,7 +315,7 @@ For each unit, include:
 - **Dependencies** - what must exist first
 - **Files** - exact file paths to create, modify, or test
 - **Approach** - key decisions, data flow, component boundaries, or integration notes
-- **Execution note** - optional, only when the unit benefits from a non-default execution posture such as test-first or characterization-first work
+- **Execution note** - optional, only when the unit benefits from a non-default execution posture such as test-first, characterization-first, or external delegation
 - **Technical design** - optional pseudo-code or diagram when the unit's approach is non-obvious and prose alone would leave it ambiguous. Frame explicitly as directional guidance, not implementation specification
 - **Patterns to follow** - existing code or conventions to mirror
 - **Test scenarios** - specific behaviors, edge cases, and failure paths to cover
@@ -326,6 +327,7 @@ Use `Execution note` sparingly. Good uses include:
 - `Execution note: Start with a failing integration test for the request/response contract.`
 - `Execution note: Add characterization coverage before modifying this legacy parser.`
 - `Execution note: Implement new domain behavior test-first.`
+- `Execution note: Execution target: external-delegate`
 
 Do not expand units into literal `RED/GREEN/REFACTOR` substeps.
 
@@ -464,7 +466,7 @@ deepened: YYYY-MM-DD  # optional, set later by deepen-plan-beta when the plan is
 **Approach:**
 - [Key design or sequencing decision]
 
-**Execution note:** [Optional test-first, characterization-first, or other execution posture signal]
+**Execution note:** [Optional test-first, characterization-first, external-delegate, or other execution posture signal]
 
 **Technical design:** *(optional -- pseudo-code or diagram when the unit's approach is non-obvious. Directional guidance, not implementation specification.)*
 
