@@ -13,7 +13,7 @@ root_cause: architectural_pattern
 
 ## Problem
 
-When adding support for a new AI platform (e.g., Devin, Cursor, Copilot), the converter CLI architecture requires consistent implementation across types, converters, writers, CLI integration, and tests. Without documented patterns and learnings, new targets take longer to implement and risk architectural inconsistency.
+When adding support for a new AI platform (e.g., Copilot, Windsurf, Qwen), the converter CLI architecture requires consistent implementation across types, converters, writers, CLI integration, and tests. Without documented patterns and learnings, new targets take longer to implement and risk architectural inconsistency.
 
 ## Solution
 
@@ -64,7 +64,7 @@ export type {TargetName}Agent = {
 **Key Learnings:**
 
 - Always include a `content` field (full file text) rather than decomposed fields — it's simpler and matches how files are written
-- Use intermediate types for complex sections (e.g., `DevinPlaybookSections` in Devin converter) to make section building independently testable
+- Use intermediate types for complex sections to make section building independently testable
 - Avoid target-specific fields in the base bundle unless essential — aim for shared structure across targets
 - Include a `category` field if the target has file-type variants (agents vs. commands vs. rules)
 
@@ -159,7 +159,7 @@ export function transformContentFor{Target}(body: string): string {
 
 **Deduplication Pattern (`uniqueName`):**
 
-Used when target has flat namespaces (Cursor, Copilot, Devin) or when name collisions occur:
+Used when target has flat namespaces (Copilot, Windsurf) or when name collisions occur:
 
 ```typescript
 function uniqueName(base: string, used: Set<string>): string {
@@ -198,7 +198,7 @@ function flattenCommandName(name: string): string {
 
 **Key Learnings:**
 
-1. **Pre-scan for cross-references** — If target requires reference names (macros, URIs, IDs), build a map before conversion. Example: Devin needs macro names like `agent_kieran_rails_reviewer`, so pre-scan builds the map.
+1. **Pre-scan for cross-references** — If target requires reference names (macros, URIs, IDs), build a map before conversion to avoid name collisions and enable deduplication.
 
 2. **Content transformation is fragile** — Test extensively. Patterns that work for slash commands might false-match on file paths. Use negative lookahead to skip `/etc`, `/usr`, `/var`, etc.
 
@@ -377,7 +377,7 @@ if (targetName === "{target}") {
 }
 
 // Update --to flag description
-const toDescription = "Target format (opencode | codex | droid | copilot | kiro | windsurf | openclaw | qwen | {target})"
+const toDescription = "Target format (opencode | codex | droid | cursor | pi | copilot | gemini | kiro | windsurf | openclaw | qwen | all)"
 ```
 
 ---
@@ -427,7 +427,7 @@ export async function syncTo{Target}(outputRoot: string): Promise<void> {
 
 ```typescript
 // Add to validTargets array
-const validTargets = ["opencode", "codex", "droid", "cursor", "pi", "{target}"] as const
+const validTargets = ["opencode", "codex", "droid", "pi", "copilot", "gemini", "kiro", "windsurf", "openclaw", "qwen", "{target}"] as const
 
 // In resolveOutputRoot()
 case "{target}":
@@ -614,7 +614,7 @@ Add to supported targets list and include usage examples.
 
 | Pitfall | Solution |
 |---------|----------|
-| **Double-nesting** (`.cursor/.cursor/`) | Check `path.basename(outputRoot)` before nesting |
+| **Double-nesting** (`.copilot/.copilot/`) | Check `path.basename(outputRoot)` before nesting |
 | **Inconsistent name normalization** | Use single `normalizeName()` function everywhere |
 | **Fragile content transformation** | Test regex patterns against edge cases (file paths, URLs) |
 | **Heuristic section extraction fails** | Use structural mapping (description → Overview, body → Procedure) instead |
