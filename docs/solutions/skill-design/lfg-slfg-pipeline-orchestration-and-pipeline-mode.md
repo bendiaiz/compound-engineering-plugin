@@ -82,11 +82,13 @@ Added a `## Pipeline Mode` section that defines behavior when invoked from LFG/S
 
 Both skills now assess task complexity in Phase 0 before invoking any downstream skills:
 
-- **Direct:** Trivial, obvious fixes (typos, renames). Makes the change, verifies, done. No skills loaded.
-- **Lightweight:** Clear, bounded tasks where requirements are already in the description. Does the work directly with verification and self-review. Skips brainstorm, plan, and multi-agent review.
+- **Direct:** Trivial, obvious fixes (typos, renames). Makes the change, verifies it, and still preserves the branch/commit/PR lifecycle without loading planning or review skills.
+- **Lightweight:** Clear, bounded tasks where requirements are already in the description. Does the work directly with verification and self-review, then still preserves the branch/commit/PR lifecycle. Skips brainstorm, plan, and multi-agent review.
 - **Full Pipeline:** Tasks with enough scope, ambiguity, or risk that structured planning prevents wasted work. Runs the complete skill chain including brainstorm.
 
 The routing biases toward under-routing -- when the boundary between tiers is unclear, it prefers the cheaper path (Direct over Lightweight, Full Pipeline over Lightweight when ambiguity exists).
+
+The fast paths do **not** skip git safety or PR creation. They still preserve the same branch/worktree safety and branch-to-PR completion contract that previously lived inside `ce:work`; they only skip planning/review ceremony.
 
 Within the Full Pipeline path, `/ce:brainstorm $ARGUMENTS` runs as step 1 (before optional ralph-loop). Ralph-loop is repositioned to step 2 -- after brainstorm (which may need user interaction) but before plan (which is autonomous).
 
@@ -105,6 +107,10 @@ Added a `## Pipeline Mode Convention` section to `plugins/compound-engineering/A
 ### Full Pipeline always invokes brainstorm, not conditionally
 
 Within the Full Pipeline path, brainstorm is always invoked rather than duplicating its skip criteria in the router. Brainstorm's own Phase 0.2 handles the skip assessment internally -- this keeps the decision logic in one place and avoids the pipeline second-guessing the skill. The Direct and Lightweight paths bypass brainstorm entirely because those tasks have clear, specified requirements by definition.
+
+### Fast paths still preserve the git lifecycle
+
+Direct and Lightweight are execution shortcuts, not lifecycle shortcuts. They skip brainstorm/plan/review when those would add ceremony, but they still preserve the branch/worktree safety, commit, push, and PR-creation responsibilities needed to keep `/lfg` and `/slfg` true to their "to PR" contract.
 
 ### Pipeline mode is skill-internal
 

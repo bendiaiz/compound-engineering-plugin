@@ -18,15 +18,17 @@ Announce the routing decision in one line before proceeding:
 - "**Lightweight** -- [what and why]"
 - "**Full pipeline** -- [why this needs structured planning and review]"
 
-Then execute immediately. Do not wait for confirmation.
+Then execute immediately. Do not wait for confirmation about the routing decision itself.
 
 ---
 
 ### Direct
 
-The fix is obvious and self-contained. No planning needed, no review needed, no skills loaded.
+The fix is obvious and self-contained. No planning or multi-agent review needed.
 
-Make the change, verify it works (typecheck, lint, or test if applicable), and output `<promise>DONE</promise>`.
+Before changing files, preserve the same branch/worktree safety as `ce:work` Phase 1: choose the right branch first, and never commit directly to the default branch without explicit user permission.
+
+Make the change, verify it works (typecheck, lint, or test if applicable), then preserve the same wrap-up contract as `ce:work` Phase 4: commit it, push it, and create or update the PR before outputting `<promise>DONE</promise>`.
 
 ---
 
@@ -34,7 +36,9 @@ Make the change, verify it works (typecheck, lint, or test if applicable), and o
 
 The task is clear and bounded -- requirements and expected behavior are already in the description. Loading brainstorm, plan, and multi-agent review would add ceremony without improving the outcome.
 
-Do the work directly. Verify it works (typecheck, lint, or test if applicable) and give it a quick self-review for obvious issues. Output `<promise>DONE</promise>`.
+Before changing files, preserve the same branch/worktree safety as `ce:work` Phase 1: choose the right branch first, and never commit directly to the default branch without explicit user permission.
+
+Do the work directly. Verify it works (typecheck, lint, or test if applicable), give it a quick self-review for obvious issues, then preserve the same wrap-up contract as `ce:work` Phase 4: commit it, push it, and create or update the PR before outputting `<promise>DONE</promise>`.
 
 ---
 
