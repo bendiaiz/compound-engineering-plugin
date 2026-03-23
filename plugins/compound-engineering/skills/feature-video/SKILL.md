@@ -57,6 +57,29 @@ gh pr create --draft --title "[branch-name-humanized]" --body "Draft PR for vide
 
 If option 2: set `RECORD_ONLY=true`. Proceed through Steps 2-5 (record and encode), skip Steps 6-7 (upload and PR update), and report the local video path at the end. The user can re-run the skill after creating a PR to upload.
 
+### 1b. Verify Required Tools
+
+Before proceeding, check that required CLI tools are installed. Fail early with a clear message rather than failing mid-workflow after screenshots have been recorded:
+
+```bash
+command -v ffmpeg
+```
+
+```bash
+command -v agent-browser
+```
+
+```bash
+command -v gh
+```
+
+If any tool is missing, stop and report which tools need to be installed:
+- `ffmpeg`: `brew install ffmpeg` (macOS) or equivalent
+- `agent-browser`: load the `agent-browser` skill for installation instructions
+- `gh`: `brew install gh` (macOS) or see https://cli.github.com
+
+Do not proceed to Step 2 until all tools are available.
+
 ### 2. Gather Feature Context
 
 **If a PR is available**, get PR details and changed files:
