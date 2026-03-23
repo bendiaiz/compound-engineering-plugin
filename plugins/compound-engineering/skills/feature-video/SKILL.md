@@ -1,53 +1,25 @@
 ---
 name: feature-video
-description: Record a video walkthrough of a feature and add it to the PR description
+description: Record a video walkthrough of a feature and add it to the PR description. Use when a PR needs a visual demo for reviewers, when the user asks to demo a feature, create a PR video, record a walkthrough, show what changed visually, or add a video to a pull request.
 argument-hint: "[PR number or 'current'] [optional: base URL, default localhost:3000]"
 ---
 
 # Feature Video Walkthrough
 
-<command_purpose>Record a video walkthrough demonstrating a feature, upload it, and add it to the PR description.</command_purpose>
-
-## Introduction
-
-<role>Developer Relations Engineer creating feature demo videos</role>
-
-This command creates professional video walkthroughs of features for PR documentation:
-- Records browser interactions using agent-browser CLI
-- Demonstrates the complete user flow
-- Uploads the video for easy sharing
-- Updates the PR description with an embedded video
+Record browser interactions demonstrating a feature, stitch screenshots into an MP4 video, upload natively to GitHub, and embed in the PR description as an inline video player.
 
 ## Prerequisites
 
-<requirements>
-- Local development server running (e.g., `bin/dev`, `rails server`)
-- agent-browser CLI installed
-- Git repository with a PR to document
+- Local development server running (e.g., `bin/dev`, `npm run dev`, `rails server`)
+- `agent-browser` CLI installed (load the `agent-browser` skill for details)
 - `ffmpeg` installed (for video conversion)
-- `rclone` configured (optional, for cloud upload - see rclone skill)
-- Public R2 base URL known (for example, `https://<public-domain>.r2.dev`)
-</requirements>
-
-## Setup
-
-**Check installation:**
-```bash
-command -v agent-browser >/dev/null 2>&1 && echo "Installed" || echo "NOT INSTALLED"
-```
-
-**Install if needed:**
-```bash
-npm install -g agent-browser && agent-browser install
-```
-
-See the `agent-browser` skill for detailed usage.
+- `gh` CLI authenticated with push access to the repo
+- Git repository with a PR to document
+- One-time GitHub browser auth (see Step 6 auth check)
 
 ## Main Tasks
 
 ### 1. Parse Arguments
-
-<parse_args>
 
 **Arguments:** $ARGUMENTS
 
@@ -56,40 +28,24 @@ Parse the input:
 - Second argument: Base URL (defaults to `http://localhost:3000`)
 
 ```bash
-# Get PR number for current branch if needed
 gh pr view --json number -q '.number'
 ```
 
-</parse_args>
-
 ### 2. Gather Feature Context
 
-<gather_context>
+Get PR details and changed files to determine what to demonstrate:
 
-**Get PR details:**
 ```bash
 gh pr view [number] --json title,body,files,headRefName -q '.'
 ```
 
-**Get changed files:**
 ```bash
 gh pr view [number] --json files -q '.files[].path'
 ```
 
-**Map files to testable routes** (same as playwright-test):
-
-| File Pattern | Route(s) |
-|-------------|----------|
-| `app/views/users/*` | `/users`, `/users/:id`, `/users/new` |
-| `app/controllers/settings_controller.rb` | `/settings` |
-| `app/javascript/controllers/*_controller.js` | Pages using that Stimulus controller |
-| `app/components/*_component.rb` | Pages rendering that component |
-
-</gather_context>
+Map changed files to routes/pages that should be demonstrated. Examine the project's routing configuration (e.g., `routes.rb`, `next.config.js`, `app/` directory structure) to determine which URLs correspond to the changed files.
 
 ### 3. Plan the Video Flow
-
-<plan_flow>
 
 Before recording, create a shot list:
 
@@ -99,12 +55,12 @@ Before recording, create a shot list:
 4. **Edge cases**: Error states, validation, etc. (if applicable)
 5. **Success state**: Completed action/result
 
-Ask user to confirm or adjust the flow:
+Present the proposed flow to the user for confirmation before recording.
 
-```markdown
-**Proposed Video Flow**
+**Use the platform's blocking question tool when available** (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). Otherwise, present numbered options and wait for the user's reply before proceeding:
 
-Based on PR #[number]: [title]
+```
+Proposed Video Flow for PR #[number]: [title]
 
 1. Start at: /[starting-route]
 2. Navigate to: /[feature-route]
@@ -116,218 +72,182 @@ Based on PR #[number]: [title]
 
 Estimated duration: ~[X] seconds
 
-Does this look right?
-1. Yes, start recording
+1. Start recording
 2. Modify the flow (describe changes)
 3. Add specific interactions to demonstrate
 ```
 
-</plan_flow>
+### 4. Record the Walkthrough
 
-### 4. Setup Video Recording
-
-<setup_recording>
-
-**Create videos directory:**
-```bash
-mkdir -p tmp/videos
-```
-
-**Recording approach: Use browser screenshots as frames**
-
-agent-browser captures screenshots at key moments, then combine into video using ffmpeg:
+Create output directories:
 
 ```bash
-ffmpeg -framerate 2 -pattern_type glob -i 'tmp/screenshots/*.png' -vf "scale=1280:-1" tmp/videos/feature-demo.gif
+mkdir -p .context/compound-engineering/feature-video/screenshots
+mkdir -p .context/compound-engineering/feature-video/videos
 ```
 
-</setup_recording>
+Execute the planned flow, capturing each step with agent-browser. Number screenshots sequentially for correct frame ordering:
 
-### 5. Record the Walkthrough
-
-<record_walkthrough>
-
-Execute the planned flow, capturing each step:
-
-**Step 1: Navigate to starting point**
 ```bash
 agent-browser open "[base-url]/[start-route]"
 agent-browser wait 2000
-agent-browser screenshot tmp/screenshots/01-start.png
+agent-browser screenshot .context/compound-engineering/feature-video/screenshots/01-start.png
 ```
 
-**Step 2: Perform navigation/interactions**
 ```bash
-agent-browser snapshot -i  # Get refs
-agent-browser click @e1    # Click navigation element
+agent-browser snapshot -i
+agent-browser click @e1
 agent-browser wait 1000
-agent-browser screenshot tmp/screenshots/02-navigate.png
+agent-browser screenshot .context/compound-engineering/feature-video/screenshots/02-navigate.png
 ```
 
-**Step 3: Demonstrate feature**
 ```bash
-agent-browser snapshot -i  # Get refs for feature elements
-agent-browser click @e2    # Click feature element
+agent-browser snapshot -i
+agent-browser click @e2
 agent-browser wait 1000
-agent-browser screenshot tmp/screenshots/03-feature.png
+agent-browser screenshot .context/compound-engineering/feature-video/screenshots/03-feature.png
 ```
 
-**Step 4: Capture result**
 ```bash
 agent-browser wait 2000
-agent-browser screenshot tmp/screenshots/04-result.png
+agent-browser screenshot .context/compound-engineering/feature-video/screenshots/04-result.png
 ```
 
-**Create video/GIF from screenshots:**
+### 5. Create Video
+
+Stitch screenshots into an MP4:
 
 ```bash
-# Create directories
-mkdir -p tmp/videos tmp/screenshots
-
-# Create MP4 video (RECOMMENDED - better quality, smaller size)
-# -framerate 0.5 = 2 seconds per frame (slower playback)
-# -framerate 1 = 1 second per frame
-ffmpeg -y -framerate 0.5 -pattern_type glob -i 'tmp/screenshots/*.png' \
+ffmpeg -y -framerate 0.5 -pattern_type glob -i '.context/compound-engineering/feature-video/screenshots/*.png' \
   -c:v libx264 -pix_fmt yuv420p -vf "scale=1280:-2" \
-  tmp/videos/feature-demo.mp4
-
-# Create low-quality GIF for preview (small file, for GitHub embed)
-ffmpeg -y -framerate 0.5 -pattern_type glob -i 'tmp/screenshots/*.png' \
-  -vf "scale=640:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=128[p];[s1][p]paletteuse" \
-  -loop 0 tmp/videos/feature-demo-preview.gif
+  .context/compound-engineering/feature-video/videos/feature-demo.mp4
 ```
 
-**Note:**
-- The `-2` in MP4 scale ensures height is divisible by 2 (required for H.264)
-- Preview GIF uses 640px width and 128 colors to keep file size small (~100-200KB)
+Notes:
+- `-framerate 0.5` = 2 seconds per frame. Adjust for faster/slower playback.
+- `-2` in scale ensures height is divisible by 2 (required for H.264).
 
-</record_walkthrough>
+### 6. Authenticate & Upload to GitHub
 
-### 6. Upload the Video
+Upload produces a `user-attachments/assets/` URL that GitHub renders as a native inline video player -- the same result as pasting a video into the PR editor manually.
 
-<upload_video>
+The approach: close any existing agent-browser session, start a Chrome-engine session with saved GitHub auth, navigate to the PR page, set the video file on the comment form's hidden file input, wait for GitHub to process the upload, extract the resulting URL, then clear the textarea without submitting.
 
-**Upload with rclone:**
+#### Check for existing session
+
+First, check if a saved GitHub session already exists:
 
 ```bash
-# Check rclone is configured
-rclone listremotes
-
-# Set your public base URL (NO trailing slash)
-PUBLIC_BASE_URL="https://<your-public-r2-domain>.r2.dev"
-
-# Upload video, preview GIF, and screenshots to cloud storage
-# Use --s3-no-check-bucket to avoid permission errors
-rclone copy tmp/videos/ r2:kieran-claude/pr-videos/pr-[number]/ --s3-no-check-bucket --progress
-rclone copy tmp/screenshots/ r2:kieran-claude/pr-videos/pr-[number]/screenshots/ --s3-no-check-bucket --progress
-
-# List uploaded files
-rclone ls r2:kieran-claude/pr-videos/pr-[number]/
-
-# Build and validate public URLs BEFORE updating PR
-VIDEO_URL="$PUBLIC_BASE_URL/pr-videos/pr-[number]/feature-demo.mp4"
-PREVIEW_URL="$PUBLIC_BASE_URL/pr-videos/pr-[number]/feature-demo-preview.gif"
-
-curl -I "$VIDEO_URL"
-curl -I "$PREVIEW_URL"
-
-# Require HTTP 200 for both URLs; stop if either fails
-curl -I "$VIDEO_URL" | head -n 1 | grep -q ' 200 ' || exit 1
-curl -I "$PREVIEW_URL" | head -n 1 | grep -q ' 200 ' || exit 1
+agent-browser close
+agent-browser --engine chrome --session-name github open https://github.com/settings/profile
+agent-browser get title
 ```
 
-</upload_video>
+If the page title contains the user's GitHub username or "Profile", the session is still valid -- skip to "Upload the video" below. If it redirects to the login page, the session has expired or was never created -- proceed to "Auth setup".
+
+#### Auth setup (one-time)
+
+Establish an authenticated GitHub session. This only needs to happen once -- session cookies persist across runs via the `--session-name` flag.
+
+Close the current session and open the GitHub login page in a headed Chrome window:
+
+```bash
+agent-browser close
+agent-browser --engine chrome --headed --session-name github open https://github.com/login
+```
+
+The user must log in manually in the browser window (handles 2FA, SSO, OAuth -- any login method). **Use the platform's blocking question tool** (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini) to prompt:
+
+```
+GitHub login required for video upload.
+
+A Chrome window has opened to github.com/login. Please log in manually
+(this handles 2FA/SSO/OAuth automatically). Reply when done.
+```
+
+After login, verify the session works:
+
+```bash
+agent-browser open https://github.com/settings/profile
+```
+
+If the profile page loads, auth is confirmed. The `github` session is now saved and reusable.
+
+#### Upload the video
+
+Navigate to the PR comment form and upload via the hidden file input:
+
+```bash
+agent-browser open "https://github.com/[owner]/[repo]/pull/[number]"
+agent-browser scroll down 5000
+agent-browser upload '#fc-new_comment_field' .context/compound-engineering/feature-video/videos/feature-demo.mp4
+```
+
+Wait for GitHub to process the upload (typically 3-5 seconds), then read the textarea value:
+
+```bash
+agent-browser wait 5000
+agent-browser eval "document.getElementById('new_comment_field').value"
+```
+
+The textarea will contain a URL like `https://github.com/user-attachments/assets/[uuid]`. Extract this URL -- it is the VIDEO_URL for embedding.
+
+Clear the textarea without submitting (the upload is already persisted server-side):
+
+```bash
+agent-browser eval "const ta = document.getElementById('new_comment_field'); ta.value = ''; ta.dispatchEvent(new Event('input', { bubbles: true }))"
+```
 
 ### 7. Update PR Description
 
-<update_pr>
+Get the current PR body:
 
-**Get current PR body:**
 ```bash
 gh pr view [number] --json body -q '.body'
 ```
 
-**Add video section to PR description:**
-
-If the PR already has a video section, replace it. Otherwise, append:
-
-**IMPORTANT:** GitHub cannot embed external MP4s directly. Use a clickable GIF that links to the video:
+Append a Demo section (or replace an existing one). The video URL renders as an inline player when placed on its own line:
 
 ```markdown
 ## Demo
 
-[![Feature Demo]([preview-gif-url])]([video-mp4-url])
+https://github.com/user-attachments/assets/[uuid]
 
-*Click to view full video*
+*Automated video walkthrough*
 ```
 
-Example:
-```markdown
-[![Feature Demo](https://<your-public-r2-domain>.r2.dev/pr-videos/pr-137/feature-demo-preview.gif)](https://<your-public-r2-domain>.r2.dev/pr-videos/pr-137/feature-demo.mp4)
-```
+Update the PR:
 
-**Update the PR:**
 ```bash
-gh pr edit [number] --body "[updated body with video section]"
+gh pr edit [number] --body "[updated body with demo section]"
 ```
-
-**Or add as a comment if preferred:**
-```bash
-gh pr comment [number] --body "## Feature Demo
-
-![Demo]([video-url])
-
-_Automated walkthrough of the changes in this PR_"
-```
-
-</update_pr>
 
 ### 8. Cleanup
 
-<cleanup>
+Ask the user before removing temporary files. If confirmed, clean up scratch space:
 
 ```bash
-# Optional: Clean up screenshots
-rm -rf tmp/screenshots
-
-# Keep videos for reference
-echo "Video retained at: tmp/videos/feature-demo.gif"
+rm -r .context/compound-engineering/feature-video
 ```
 
-</cleanup>
+Present a completion summary:
 
-### 9. Summary
+```
+Feature Video Complete
 
-<summary>
+PR: #[number] - [title]
+Video: [VIDEO_URL]
 
-Present completion summary:
+Shots captured:
+1. [description]
+2. [description]
+3. [description]
+4. [description]
 
-```markdown
-## Feature Video Complete
-
-**PR:** #[number] - [title]
-**Video:** [url or local path]
-**Duration:** ~[X] seconds
-**Format:** [GIF/MP4]
-
-### Shots Captured
-1. [Starting point] - [description]
-2. [Navigation] - [description]
-3. [Feature demo] - [description]
-4. [Result] - [description]
-
-### PR Updated
-- [x] Video section added to PR description
-- [ ] Ready for review
-
-**Next steps:**
-- Review the video to ensure it accurately demonstrates the feature
-- Share with reviewers for context
+PR description updated with demo section.
 ```
 
-</summary>
-
-## Quick Usage Examples
+## Usage Examples
 
 ```bash
 # Record video for current branch's PR
@@ -345,7 +265,20 @@ Present completion summary:
 
 ## Tips
 
-- **Keep it short**: 10-30 seconds is ideal for PR demos
-- **Focus on the change**: Don't include unrelated UI
-- **Show before/after**: If fixing a bug, show the broken state first (if possible)
-- **Annotate if needed**: Add text overlays for complex features
+- Keep it short: 10-30 seconds is ideal for PR demos
+- Focus on the change: don't include unrelated UI
+- Show before/after: if fixing a bug, show the broken state first (if possible)
+- The `--session-name github` session expires when GitHub invalidates the cookies (typically weeks). If upload fails with a login redirect, re-run the auth setup.
+- GitHub DOM selectors (`#fc-new_comment_field`, `#new_comment_field`) may change if GitHub updates its UI. If the upload silently fails, inspect the PR page for updated selectors.
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `ffmpeg: command not found` | ffmpeg not installed | Install via `brew install ffmpeg` (macOS) or equivalent |
+| `agent-browser: command not found` | agent-browser not installed | Load the `agent-browser` skill for installation instructions |
+| Textarea empty after upload wait | Session expired, or GitHub processing slow | Check session validity (Step 6 auth check). If valid, increase wait time and retry. |
+| Textarea empty, URL is `github.com/login` | Session expired | Re-run auth setup (Step 6) |
+| `gh pr view` fails | No PR for current branch | Create a PR first with `gh pr create` or specify a PR number explicitly |
+| Video file too large for upload | Exceeds GitHub's 10MB (free) or 100MB (paid) limit | Re-encode: lower framerate (`-framerate 0.33`), reduce resolution (`scale=960:-2`), or increase CRF (`-crf 28`) |
+| Upload URL does not contain `user-attachments/assets/` | Wrong upload method or GitHub change | Verify the file input selector is still correct by inspecting the PR page |
