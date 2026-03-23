@@ -69,16 +69,17 @@ gh pr view [number] --json title,body,files,headRefName -q '.'
 gh pr view [number] --json files -q '.files[].path'
 ```
 
-**If in record-only mode (no PR)**, derive context from the branch diff against the base branch:
+**If in record-only mode (no PR)**, detect the default branch and derive context from the branch diff:
 
 ```bash
-git diff --name-only main...HEAD
+DEFAULT_BRANCH=$(gh repo view --json defaultBranchRef -q '.defaultBranchRef.name')
+git diff --name-only "$DEFAULT_BRANCH"...HEAD
 ```
 
 Use the branch name and commit messages to infer the feature title:
 
 ```bash
-git log --oneline main...HEAD
+git log --oneline "$DEFAULT_BRANCH"...HEAD
 ```
 
 Map changed files to routes/pages that should be demonstrated. Examine the project's routing configuration (e.g., `routes.rb`, `next.config.js`, `app/` directory structure) to determine which URLs correspond to the changed files.
@@ -157,9 +158,9 @@ agent-browser screenshot .context/compound-engineering/feature-video/$RUN_ID/scr
 Stitch screenshots into an MP4 using the same `$RUN_ID` from Step 4:
 
 ```bash
-ffmpeg -y -framerate 0.5 -pattern_type glob -i '.context/compound-engineering/feature-video/$RUN_ID/screenshots/*.png' \
+ffmpeg -y -framerate 0.5 -pattern_type glob -i ".context/compound-engineering/feature-video/$RUN_ID/screenshots/*.png" \
   -c:v libx264 -pix_fmt yuv420p -vf "scale=1280:-2" \
-  .context/compound-engineering/feature-video/$RUN_ID/videos/feature-demo.mp4
+  ".context/compound-engineering/feature-video/$RUN_ID/videos/feature-demo.mp4"
 ```
 
 Notes:
@@ -214,21 +215,26 @@ If the profile page loads, auth is confirmed. The `github` session is now saved 
 
 #### Upload the video
 
-Navigate to the PR comment form and upload via the hidden file input:
+Navigate to the PR page and scroll to the comment form:
 
 ```bash
 agent-browser open "https://github.com/[owner]/[repo]/pull/[number]"
 agent-browser scroll down 5000
-agent-browser upload '#fc-new_comment_field' .context/compound-engineering/feature-video/$RUN_ID/videos/feature-demo.mp4
 ```
 
-Before uploading, save any existing textarea content so it can be restored afterwards (the comment box may contain an unsent draft):
+Save any existing textarea content before uploading (the comment box may contain an unsent draft):
 
 ```bash
 agent-browser eval "document.getElementById('new_comment_field').value"
 ```
 
 Store this value as `SAVED_TEXTAREA`. If non-empty, it will be restored after extracting the upload URL.
+
+Upload the video via the hidden file input:
+
+```bash
+agent-browser upload '#fc-new_comment_field' .context/compound-engineering/feature-video/$RUN_ID/videos/feature-demo.mp4
+```
 
 Wait for GitHub to process the upload (typically 3-5 seconds), then read the textarea value:
 
