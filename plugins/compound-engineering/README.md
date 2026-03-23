@@ -97,7 +97,7 @@ Core workflow commands use `ce:` prefix to unambiguously identify them as compou
 |---------|-------------|
 | `/ce:ideate` | Discover high-impact project improvements through divergent ideation and adversarial filtering |
 | `/ce:brainstorm` | Explore requirements and approaches before planning |
-| `/ce:plan` | Create implementation plans |
+| `/ce:plan` | Transform features into structured implementation plans grounded in repo patterns |
 | `/ce:review` | Run comprehensive code reviews |
 | `/ce:work` | Execute work items systematically |
 | `/ce:compound` | Document solved problems to compound team knowledge |
@@ -178,11 +178,9 @@ Experimental versions of core workflow skills. These are being tested before rep
 
 | Skill | Description | Replaces |
 |-------|-------------|----------|
-| `ce:plan-beta` | Decision-first planning focused on boundaries, sequencing, and verification | `ce:plan` |
 | `ce:review-beta` | Structured review with tiered persona agents, confidence gating, and dedup pipeline | `ce:review` |
-| `deepen-plan-beta` | Selective stress-test that targets weak sections with research | `deepen-plan` |
 
-To test: invoke `/ce:plan-beta`, `/ce:review-beta`, or `/deepen-plan-beta` directly. Plans produced by the beta skills are compatible with `/ce:work`.
+To test: invoke `/ce:review-beta` directly.
 
 ### Image Generation
 
