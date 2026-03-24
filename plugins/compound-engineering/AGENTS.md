@@ -61,7 +61,7 @@ skills/
 
 ## Autopilot Mode Convention
 
-Skills with interactive handoff menus, post-generation options, or optional wrap-up flows must support **autopilot mode** when invoked from LFG, SLFG, or another caller-controlled automated workflow. Do not rely on beta-only frontmatter to define autopilot mode; promoted stable skills must preserve the same behavior when called by an autopilot workflow.
+Skills with interactive handoff menus, post-generation options, or optional wrap-up flows must support **autopilot mode** when invoked from `lfg` or `slfg`. Do not rely on beta-only frontmatter to define autopilot mode; promoted stable skills must preserve the same behavior when called by `lfg` or `slfg`.
 
 The core rule: **skip workflow prompts, keep only truly necessary content prompts.**
 

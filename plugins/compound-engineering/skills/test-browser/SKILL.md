@@ -26,7 +26,7 @@ Platform-specific hints:
 
 ## Autopilot Mode
 
-When invoked from LFG, SLFG, or another caller-controlled automated workflow, prefer progress over interaction and use safe defaults.
+When invoked from `lfg` or `slfg`, prefer progress over interaction and use safe defaults.
 
 Specific behavior:
 

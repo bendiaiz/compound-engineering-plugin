@@ -5,7 +5,7 @@ argument-hint: "[feature description]"
 disable-model-invocation: true
 ---
 
-Swarm-enabled LFG. Assess the task, choose the right execution path, and get it done -- parallelizing where it helps.
+Swarm-enabled `lfg`. Assess the task, choose the right execution path, and get it done -- parallelizing where it helps.
 
 ## Phase 0: Assess and Route
 

@@ -36,7 +36,7 @@ This skill does not implement code. It explores, clarifies, and documents decisi
 
 ## Autopilot Mode
 
-When invoked from an automated workflow (LFG, SLFG, or any `disable-model-invocation` context), distinguish between two kinds of prompts:
+When invoked from `lfg` or `slfg`, distinguish between two kinds of prompts:
 
 - **Workflow prompts** (handoff menus, "what do you want to do next?", "resume or start fresh?", post-generation options) → skip. These control routing, and the pipeline handles routing.
 - **Content prompts** (clarifying what to build, resolving ambiguity, scoping questions) → still ask. Getting requirements wrong wastes every downstream step.

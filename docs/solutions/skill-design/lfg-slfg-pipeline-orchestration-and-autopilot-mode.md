@@ -1,5 +1,5 @@
 ---
-title: "LFG/SLFG pipeline orchestration and the Autopilot Mode pattern"
+title: "`lfg`/`slfg` pipeline orchestration and the Autopilot Mode pattern"
 category: skill-design
 date: 2026-03-22
 severity: medium
@@ -15,7 +15,7 @@ tags:
   - autonomous-workflow
 ---
 
-# LFG/SLFG Pipeline Orchestration and the Autopilot Mode Pattern
+# `lfg`/`slfg` Pipeline Orchestration and the Autopilot Mode Pattern
 
 ## Problem
 
@@ -50,7 +50,7 @@ Three behaviors in `ce:brainstorm` prevented simple insertion:
 
 2. **Phase 4 handoff invoked ce:plan directly.** After generating a requirements doc, brainstorm would invoke `ce:plan` as a chained handoff. If brainstorm was followed by `ce:plan` in the pipeline, plan would run twice.
 
-3. **No awareness of pipeline context.** `ce:brainstorm` did not detect `disable-model-invocation` frontmatter (the signal that a skill is running inside an automated pipeline), so it could not adjust its behavior.
+3. **No awareness of autopilot caller context.** `ce:brainstorm` did not detect when it was being run by `lfg` or `slfg`, so it could not adjust its behavior.
 
 ### Existing autopilot-aware precedent
 
@@ -69,7 +69,7 @@ Three-part fix across four files.
 
 ### 1. Added Autopilot Mode to ce:brainstorm
 
-Added a `## Autopilot Mode` section that defines behavior when invoked from LFG/SLFG/autopilot caller context:
+Added a `## Autopilot Mode` section that defines behavior when invoked from `lfg`/`slfg`/autopilot caller context:
 
 - **Phase 0.1:** If a relevant requirements doc already exists in `docs/brainstorms/`, check staleness first: skip the doc if a completed plan in `docs/plans/` already references it (via `origin:` + `status: completed`), or if its scope meaningfully diverges from the current `$ARGUMENTS`. If the doc is still relevant, check for `Resolve Before Planning` items -- if blocking questions remain, resume the brainstorm to resolve them rather than returning control (otherwise the pipeline dead-ends). If the doc is plan-ready, return control immediately.
 - **Empty feature description:** Ask the user. This is the one interaction that cannot be skipped -- brainstorm owns "what do you want to build?"
@@ -100,7 +100,7 @@ Added a `## Autopilot Mode Convention` section to `plugins/compound-engineering/
 
 - When to add autopilot mode (skills with interactive handoff menus or post-generation AskUserQuestion calls)
 - What autopilot mode means (skip prompts, skip handoffs, write outputs, return control)
-- How caller-controlled automated workflows trigger it
+- How `lfg` and `slfg` trigger it
 
 ## Key Design Decisions
 

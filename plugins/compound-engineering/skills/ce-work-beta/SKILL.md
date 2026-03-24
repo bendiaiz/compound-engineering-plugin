@@ -15,7 +15,7 @@ This command takes a work document (plan, specification, or todo file) and execu
 
 ## Autopilot Mode
 
-When invoked from LFG, SLFG, or another caller-controlled automated workflow, use the same safe defaults described below and avoid workflow prompts.
+When invoked from `lfg` or `slfg`, use the same safe defaults described below and avoid workflow prompts.
 
 Specific behavior:
 

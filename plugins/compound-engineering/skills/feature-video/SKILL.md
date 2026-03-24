@@ -19,7 +19,7 @@ Record browser interactions demonstrating a feature, stitch screenshots into an 
 
 ## Autopilot Mode
 
-When invoked from LFG, SLFG, or another caller-controlled automated workflow, treat feature video as best effort and prefer continuing the pipeline over blocking on interaction.
+When invoked from `lfg` or `slfg`, treat feature video as best effort and prefer continuing the pipeline over blocking on interaction.
 
 Specific behavior:
 
