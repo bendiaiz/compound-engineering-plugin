@@ -54,7 +54,7 @@ GATE: STOP. Verify that the compound skill produced a solution document in `docs
 
 ### 6. Clean Up Completed Todos
 
-List all todos and identify those with `done` or `resolved` status, then delete them to keep the todo list clean and actionable.
+Search both `.context/compound-engineering/todos/` and legacy `todos/` for files with `done`, `resolved`, or `complete` status, then delete them to keep the todo list clean and actionable.
 
 If a scratch directory was used and the user did not ask to inspect it, clean it up after todo cleanup succeeds.
 
