@@ -36,7 +36,7 @@ describe("ce-review-beta contract", () => {
       'If the fixer queue is empty, do not offer "Apply safe_auto fixes" options.',
     )
     expect(content).toContain(
-      "In autonomous mode, create durable `todos/` items only for unresolved actionable findings whose final owner is `downstream-resolver`.",
+      "In autonomous mode, create durable todo files only for unresolved actionable findings whose final owner is `downstream-resolver`.",
     )
     expect(content).toContain("If only advisory outputs remain, create no todos.")
     expect(content).toContain("**On the resolved review base/default branch:**")

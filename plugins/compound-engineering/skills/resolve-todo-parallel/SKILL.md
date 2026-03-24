@@ -10,7 +10,7 @@ Resolve all TODO comments using parallel processing, document lessons learned, t
 
 ### 1. Analyze
 
-Get all unresolved TODOs from the /todos/*.md directory
+Get all unresolved TODOs from `.context/compound-engineering/todos/*.md` and legacy `todos/*.md`
 
 Residual actionable work may come from `ce:review-beta mode:autonomous` after its in-skill `safe_auto` pass. Treat those todos as normal unresolved work items; the review skill has already decided they should not be auto-fixed inline.
 

@@ -32,13 +32,13 @@ Check `$ARGUMENTS` for `mode:autonomous` or `mode:report-only`. If either token 
 - **Skip all user questions.** Never pause for approval or clarification once scope has been established.
 - **Apply only `safe_auto -> review-fixer` findings.** Leave `gated_auto`, `manual`, `human`, and `release` work unresolved.
 - **Write a run artifact** under `.context/compound-engineering/ce-review-beta/<run-id>/` summarizing findings, applied fixes, residual actionable work, and advisory outputs.
-- **Create durable `todos/` items only for unresolved actionable findings** whose final owner is `downstream-resolver`.
+- **Create durable todo files only for unresolved actionable findings** whose final owner is `downstream-resolver`. Load the `file-todos` skill for the canonical directory path and naming convention.
 - **Never commit, push, or create a PR** from autonomous mode. Parent workflows own those decisions.
 
 ### Report-only mode rules
 
 - **Skip all user questions.** Infer intent conservatively if the diff metadata is thin.
-- **Never edit files or externalize work.** Do not write `.context/compound-engineering/ce-review-beta/<run-id>/`, do not create `todos/`, and do not commit, push, or create a PR.
+- **Never edit files or externalize work.** Do not write `.context/compound-engineering/ce-review-beta/<run-id>/`, do not create todo files, and do not commit, push, or create a PR.
 - **Safe for parallel read-only verification.** `mode:report-only` is the only mode that is safe to run concurrently with browser testing on the same checkout.
 - **Do not switch the shared checkout.** If the caller passes an explicit PR or branch target, `mode:report-only` must run in an isolated checkout/worktree or stop instead of running `gh pr checkout` / `git checkout`.
 - **Do not overlap mutating review with browser testing on the same checkout.** If a future orchestrator wants fixes, run the mutating review phase after browser testing or in an isolated checkout/worktree.
@@ -476,7 +476,7 @@ After presenting findings and verdict (Stage 6), route the next steps by mode. R
   - applied fixes
   - residual actionable work
   - advisory-only outputs
-- In autonomous mode, create durable `todos/` items only for unresolved actionable findings whose final owner is `downstream-resolver`. Load the `file-todos` skill for the naming convention, YAML frontmatter structure, and template. Each todo should map the finding's severity to the todo priority (`P0`/`P1` -> `p1`, `P2` -> `p2`, `P3` -> `p3`) and set `status: ready` since these findings have already been triaged by synthesis.
+- In autonomous mode, create durable todo files only for unresolved actionable findings whose final owner is `downstream-resolver`. Load the `file-todos` skill for the canonical directory path, naming convention, YAML frontmatter structure, and template. Each todo should map the finding's severity to the todo priority (`P0`/`P1` -> `p1`, `P2` -> `p2`, `P3` -> `p3`) and set `status: ready` since these findings have already been triaged by synthesis.
 - Do not create todos for `advisory` findings, `owner: human`, `owner: release`, or protected-artifact cleanup suggestions.
 - If only advisory outputs remain, create no todos.
 - Interactive mode may offer to externalize residual actionable work after fixes, but it is not required to finish the review.
