@@ -56,7 +56,7 @@ GATE: STOP. Verify that the compound skill produced a solution document in `docs
 
 Search both `.context/compound-engineering/todos/` and legacy `todos/` for files with `done`, `resolved`, or `complete` status, then delete them to keep the todo list clean and actionable.
 
-If a scratch directory was used and the user did not ask to inspect it, clean it up after todo cleanup succeeds.
+If a per-run scratch directory was created at `.context/compound-engineering/resolve-todo-parallel/<run-id>/`, and the user did not ask to inspect it, delete that specific `<run-id>/` directory after todo cleanup succeeds. Do not delete any other `.context/` subdirectories.
 
 After cleanup, output a summary:
 
