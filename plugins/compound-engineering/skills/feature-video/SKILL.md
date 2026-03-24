@@ -336,7 +336,14 @@ gh pr edit [number] --body "[updated body with demo section]"
 
 ### 8. Cleanup
 
-Ask the user before removing temporary files. If confirmed, clean up only the current run's scratch directory (other runs may still be in progress or awaiting upload).
+In autopilot mode, do not ask for cleanup confirmation:
+
+- If the video was successfully uploaded from the current run, remove only that run's scratch directory automatically.
+- If in record-only mode or upload failed, remove only that run's screenshots and preserve the `.mp4` so the caller can upload later.
+- If this was upload-only resume mode with a caller-provided `.mp4`, do not delete the caller's file.
+- Briefly note what was removed and what was preserved, then return control to the caller.
+
+Outside autopilot mode, ask the user before removing temporary files. If confirmed, clean up only the current run's scratch directory (other runs may still be in progress or awaiting upload).
 
 **If the video was successfully uploaded**, remove the entire run directory:
 
