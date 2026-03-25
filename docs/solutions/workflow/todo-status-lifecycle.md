@@ -11,7 +11,6 @@ tags:
 related_components:
   - plugins/compound-engineering/skills/todo-resolve/
   - plugins/compound-engineering/skills/ce-review/
-  - plugins/compound-engineering/skills/ce-review-beta/
   - plugins/compound-engineering/skills/todo-triage/
   - plugins/compound-engineering/skills/todo-create/
 problem_type: correctness-gap
@@ -21,12 +20,11 @@ problem_type: correctness-gap
 
 ## Problem
 
-The todo system defines a three-state lifecycle (`pending` -> `ready` -> `complete`) across three skills (`todo-create`, `todo-triage`, `todo-resolve`). Two review skills create todos with different status assumptions:
+The todo system defines a three-state lifecycle (`pending` -> `ready` -> `complete`) across three skills (`todo-create`, `todo-triage`, `todo-resolve`). Different sources create todos with different status assumptions:
 
 | Source | Status created | Reasoning |
 |--------|---------------|-----------|
-| `ce:review` | `pending` | Dumps all findings, expects separate `/todo-triage` |
-| `ce:review-beta` | `ready` | Built-in triage: confidence gating (>0.60), merge/dedup across 8 personas, owner routing. Only creates todos for `downstream-resolver` findings |
+| `ce:review` (autofix mode) | `ready` | Built-in triage: confidence gating (>0.60), merge/dedup across 8 personas, owner routing. Only creates todos for `downstream-resolver` findings |
 | `todo-create` (manual) | `pending` (default) | Template default |
 | `test-browser`, `test-xcode` | via `todo-create` | Inherit default |
 
@@ -46,9 +44,9 @@ Updated `todo-resolve` to partition todos by status in its Analyze step:
 
 This is a single-file change scoped to `todo-resolve/SKILL.md`. No schema changes, no new fields, no changes to `todo-create` or `todo-triage` -- just enforcement of the existing contract at the resolve boundary.
 
-## Key Insight: Review-Beta Promotion Eliminates Automated `pending`
+## Key Insight: No Automated Source Creates `pending` Todos
 
-Once `ce:review-beta` is promoted to stable (replacing `ce:review`), no automated source creates `pending` todos. The `pending` status becomes exclusively a human-authored state for manually created work items that need triage before action.
+No automated source creates `pending` todos. The `pending` status is exclusively a human-authored state for manually created work items that need triage before action.
 
 The safety model becomes:
 - **`ready`** = autofix-eligible. Triage already happened upstream (either built into the review pipeline or via explicit `/todo-triage`).

@@ -6,14 +6,14 @@ async function readRepoFile(relativePath: string): Promise<string> {
   return readFile(path.join(process.cwd(), relativePath), "utf8")
 }
 
-describe("ce-review-beta contract", () => {
+describe("ce-review contract", () => {
   test("documents explicit modes and orchestration boundaries", async () => {
-    const content = await readRepoFile("plugins/compound-engineering/skills/ce-review-beta/SKILL.md")
+    const content = await readRepoFile("plugins/compound-engineering/skills/ce-review/SKILL.md")
 
     expect(content).toContain("## Mode Detection")
-    expect(content).toContain("mode:autonomous")
+    expect(content).toContain("mode:autofix")
     expect(content).toContain("mode:report-only")
-    expect(content).toContain(".context/compound-engineering/ce-review-beta/<run-id>/")
+    expect(content).toContain(".context/compound-engineering/ce-review/<run-id>/")
     expect(content).toContain("Do not create residual todos or `.context` artifacts.")
     expect(content).toContain(
       "Do not start a mutating review round concurrently with browser testing on the same checkout.",
@@ -25,7 +25,7 @@ describe("ce-review-beta contract", () => {
   })
 
   test("documents policy-driven routing and residual handoff", async () => {
-    const content = await readRepoFile("plugins/compound-engineering/skills/ce-review-beta/SKILL.md")
+    const content = await readRepoFile("plugins/compound-engineering/skills/ce-review/SKILL.md")
 
     expect(content).toContain("## Action Routing")
     expect(content).toContain("Only `safe_auto -> review-fixer` enters the in-skill fixer queue automatically.")
@@ -36,7 +36,7 @@ describe("ce-review-beta contract", () => {
       'If the fixer queue is empty, do not offer "Apply safe_auto fixes" options.',
     )
     expect(content).toContain(
-      "In autonomous mode, create durable todo files only for unresolved actionable findings whose final owner is `downstream-resolver`.",
+      "In autofix mode, create durable todo files only for unresolved actionable findings whose final owner is `downstream-resolver`.",
     )
     expect(content).toContain("If only advisory outputs remain, create no todos.")
     expect(content).toContain("**On the resolved review base/default branch:**")
@@ -46,7 +46,7 @@ describe("ce-review-beta contract", () => {
 
   test("keeps findings schema and downstream docs aligned", async () => {
     const rawSchema = await readRepoFile(
-      "plugins/compound-engineering/skills/ce-review-beta/references/findings-schema.json",
+      "plugins/compound-engineering/skills/ce-review/references/findings-schema.json",
     )
     const schema = JSON.parse(rawSchema) as {
       _meta: { confidence_thresholds: { suppress: string } }
@@ -83,11 +83,19 @@ describe("ce-review-beta contract", () => {
     expect(schema._meta.confidence_thresholds.suppress).toContain("0.60")
 
     const fileTodos = await readRepoFile("plugins/compound-engineering/skills/todo-create/SKILL.md")
-    expect(fileTodos).toContain("/ce:review-beta mode:autonomous")
+    expect(fileTodos).toContain("/ce:review mode:autofix")
     expect(fileTodos).toContain("/todo-resolve")
 
     const resolveTodos = await readRepoFile("plugins/compound-engineering/skills/todo-resolve/SKILL.md")
-    expect(resolveTodos).toContain("ce:review-beta mode:autonomous")
+    expect(resolveTodos).toContain("ce:review mode:autofix")
     expect(resolveTodos).toContain("safe_auto")
+  })
+
+  test("orchestration callers pass explicit mode flags", async () => {
+    const lfg = await readRepoFile("plugins/compound-engineering/skills/lfg/SKILL.md")
+    expect(lfg).toContain("/ce:review mode:autofix")
+
+    const slfg = await readRepoFile("plugins/compound-engineering/skills/slfg/SKILL.md")
+    expect(slfg).toContain("/ce:review mode:report-only")
   })
 })

@@ -19,28 +19,28 @@ Agents are organized into categories for easier discovery.
 | Agent | Description |
 |-------|-------------|
 | `agent-native-reviewer` | Verify features are agent-native (action + context parity) |
-| `api-contract-reviewer` | Detect breaking API contract changes (ce:review-beta persona) |
+| `api-contract-reviewer` | Detect breaking API contract changes |
 | `architecture-strategist` | Analyze architectural decisions and compliance |
 | `code-simplicity-reviewer` | Final pass for simplicity and minimalism |
-| `correctness-reviewer` | Logic errors, edge cases, state bugs (ce:review-beta persona) |
+| `correctness-reviewer` | Logic errors, edge cases, state bugs |
 | `data-integrity-guardian` | Database migrations and data integrity |
 | `data-migration-expert` | Validate ID mappings match production, check for swapped values |
-| `data-migrations-reviewer` | Migration safety with confidence calibration (ce:review-beta persona) |
+| `data-migrations-reviewer` | Migration safety with confidence calibration |
 | `deployment-verification-agent` | Create Go/No-Go deployment checklists for risky data changes |
 | `dhh-rails-reviewer` | Rails review from DHH's perspective |
 | `julik-frontend-races-reviewer` | Review JavaScript/Stimulus code for race conditions |
 | `kieran-rails-reviewer` | Rails code review with strict conventions |
 | `kieran-python-reviewer` | Python code review with strict conventions |
 | `kieran-typescript-reviewer` | TypeScript code review with strict conventions |
-| `maintainability-reviewer` | Coupling, complexity, naming, dead code (ce:review-beta persona) |
+| `maintainability-reviewer` | Coupling, complexity, naming, dead code |
 | `pattern-recognition-specialist` | Analyze code for patterns and anti-patterns |
 | `performance-oracle` | Performance analysis and optimization |
-| `performance-reviewer` | Runtime performance with confidence calibration (ce:review-beta persona) |
-| `reliability-reviewer` | Production reliability and failure modes (ce:review-beta persona) |
+| `performance-reviewer` | Runtime performance with confidence calibration |
+| `reliability-reviewer` | Production reliability and failure modes |
 | `schema-drift-detector` | Detect unrelated schema.rb changes in PRs |
-| `security-reviewer` | Exploitable vulnerabilities with confidence calibration (ce:review-beta persona) |
+| `security-reviewer` | Exploitable vulnerabilities with confidence calibration |
 | `security-sentinel` | Security audits and vulnerability assessments |
-| `testing-reviewer` | Test coverage gaps, weak assertions (ce:review-beta persona) |
+| `testing-reviewer` | Test coverage gaps, weak assertions |
 
 ### Document Review
 
@@ -98,7 +98,7 @@ Core workflow commands use `ce:` prefix to unambiguously identify them as compou
 | `/ce:ideate` | Discover high-impact project improvements through divergent ideation and adversarial filtering |
 | `/ce:brainstorm` | Explore requirements and approaches before planning |
 | `/ce:plan` | Transform features into structured implementation plans grounded in repo patterns |
-| `/ce:review` | Run comprehensive code reviews |
+| `/ce:review` | Structured code review with tiered persona agents, confidence gating, and dedup pipeline |
 | `/ce:work` | Execute work items systematically |
 | `/ce:compound` | Document solved problems to compound team knowledge |
 | `/ce:compound-refresh` | Refresh stale or drifting learnings and decide whether to keep, update, replace, or archive them |
@@ -171,16 +171,6 @@ Core workflow commands use `ce:` prefix to unambiguously identify them as compou
 | Skill | Description |
 |-------|-------------|
 | `agent-browser` | CLI-based browser automation using Vercel's agent-browser |
-
-### Beta Skills
-
-Experimental versions of core workflow skills. These are being tested before replacing their stable counterparts. They work standalone but are not yet wired into the automated `lfg`/`slfg` orchestration.
-
-| Skill | Description | Replaces |
-|-------|-------------|----------|
-| `ce:review-beta` | Structured review with tiered persona agents, confidence gating, and dedup pipeline | `ce:review` |
-
-To test: invoke `/ce:review-beta` directly.
 
 ### Image Generation
 

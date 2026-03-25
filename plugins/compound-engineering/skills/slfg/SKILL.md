@@ -21,7 +21,7 @@ Swarm-enabled LFG. Run these steps in order, parallelizing where indicated. Do n
 
 After work completes, launch steps 5 and 6 as **parallel swarm agents** (both only need code to be written):
 
-5. `/ce:review` — spawn as background Task agent
+5. `/ce:review mode:report-only` — spawn as background Task agent
 6. `/compound-engineering:test-browser` — spawn as background Task agent
 
 Wait for both to complete before continuing.
