@@ -42,7 +42,7 @@ query FetchPRFeedback($owner: String!, $repo: String!, $pr: Int!) {
             isOutdated
             path
             line
-            comments(first: 20) {
+            comments(first: 50) {
               nodes {
                 id
                 author { login }
