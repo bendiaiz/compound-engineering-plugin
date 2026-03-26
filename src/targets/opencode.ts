@@ -70,8 +70,15 @@ export async function writeOpenCodeBundle(outputRoot: string, bundle: OpenCodeBu
   }
 
   const agentsDir = openCodePaths.agentsDir
+  const seenAgents = new Set<string>()
   for (const agent of bundle.agents) {
-    await writeText(path.join(agentsDir, `${sanitizePathName(agent.name)}.md`), agent.content + "\n")
+    const safeName = sanitizePathName(agent.name)
+    if (seenAgents.has(safeName)) {
+      console.warn(`Skipping agent "${agent.name}": sanitized name "${safeName}" collides with another agent`)
+      continue
+    }
+    seenAgents.add(safeName)
+    await writeText(path.join(agentsDir, `${safeName}.md`), agent.content + "\n")
   }
 
   for (const commandFile of bundle.commandFiles) {

@@ -9,13 +9,21 @@ export async function syncSkills(
 ): Promise<void> {
   await ensureDir(skillsDir)
 
+  const seen = new Set<string>()
   for (const skill of skills) {
     if (!isValidSkillName(skill.name)) {
       console.warn(`Skipping skill with invalid name: ${skill.name}`)
       continue
     }
 
-    const target = path.join(skillsDir, sanitizePathName(skill.name))
+    const safeName = sanitizePathName(skill.name)
+    if (seen.has(safeName)) {
+      console.warn(`Skipping skill "${skill.name}": sanitized name "${safeName}" collides with another skill`)
+      continue
+    }
+    seen.add(safeName)
+
+    const target = path.join(skillsDir, safeName)
     await forceSymlink(skill.sourceDir, target)
   }
 }
