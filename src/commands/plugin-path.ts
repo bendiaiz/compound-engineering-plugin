@@ -32,10 +32,10 @@ export default defineCommand({
     const source = resolveGitHubSource()
 
     if (await dirExists(targetDir)) {
-      console.log(`Updating existing checkout at ${targetDir}`)
+      console.error(`Updating existing checkout at ${targetDir}`)
       await fetchAndCheckout(targetDir, branch)
     } else {
-      console.log(`Cloning ${branch} to ${targetDir}`)
+      console.error(`Cloning ${branch} to ${targetDir}`)
       await cloneBranch(source, targetDir, branch)
     }
 
@@ -44,8 +44,9 @@ export default defineCommand({
       throw new Error(`Plugin directory not found: ${pluginPath}`)
     }
 
-    console.log(`\nReady. Use with:\n`)
-    console.log(`  claude --plugin-dir ${pluginPath}`)
+    // Plugin path goes to stdout (for scripting); usage hint goes to stderr
+    console.error(`\nReady. Use with:\n  claude --plugin-dir ${pluginPath}\n`)
+    console.log(pluginPath)
   },
 })
 
