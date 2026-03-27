@@ -1,16 +1,16 @@
 ---
 name: ce:work
-description: Execute work plans efficiently while maintaining quality and finishing features
-argument-hint: "[plan file, specification, or todo file path]"
+description: Execute work efficiently while maintaining quality and finishing features
+argument-hint: "[plan file path or description of work to do]"
 ---
 
-# Work Plan Execution Command
+# Work Execution Command
 
-Execute a work plan efficiently while maintaining quality and finishing features.
+Execute work efficiently while maintaining quality and finishing features.
 
 ## Introduction
 
-This command takes a work document (plan, specification, or todo file) and executes it systematically. The focus is on **shipping complete features** by understanding requirements quickly, following existing patterns, and maintaining quality throughout.
+This command takes a work document (plan, specification, or todo file) or a bare prompt describing the work, and executes it systematically. The focus is on **shipping complete features** by understanding requirements quickly, following existing patterns, and maintaining quality throughout.
 
 ## Input Document
 
@@ -18,9 +18,33 @@ This command takes a work document (plan, specification, or todo file) and execu
 
 ## Execution Workflow
 
+### Phase 0: Input Triage
+
+Determine how to proceed based on what was provided in `<input_document>`.
+
+**Plan document** (input is a file path to an existing plan, specification, or todo file) → skip to Phase 1.
+
+**Bare prompt** (input is a description of work, not a file path):
+
+1. **Scan the work area**
+
+   - Identify files likely to change based on the prompt
+   - Find existing test files for those areas (search for test/spec files that import, reference, or share names with the implementation files)
+   - Note local patterns and conventions in the affected areas
+
+2. **Assess complexity and route**
+
+   | Complexity | Signals | Action |
+   |-----------|---------|--------|
+   | **Trivial** | 1-2 files, no behavioral change (typo, config, rename) | Skip task tracking. Proceed to Phase 1 step 2 (environment setup), then execute in Phase 2 |
+   | **Small / Medium** | Clear scope, under ~10 files | Build a task list from discovery. Proceed to Phase 1 step 2 |
+   | **Large** | Cross-cutting, architectural decisions, 10+ files, touches auth/payments/migrations | Inform the user this would benefit from `/ce:brainstorm` or `/ce:plan` to surface edge cases and scope boundaries. Honor their choice. If proceeding, build a task list and continue to Phase 1 step 2 |
+
+---
+
 ### Phase 1: Quick Start
 
-1. **Read Plan and Clarify**
+1. **Read Plan and Clarify** _(skip if arriving from Phase 0 with a bare prompt)_
 
    - Read the work document completely
    - Treat the plan as a decision artifact, not an execution script
@@ -78,7 +102,7 @@ This command takes a work document (plan, specification, or todo file) and execu
    - You want to keep the default branch clean while experimenting
    - You plan to switch between branches frequently
 
-3. **Create Todo List**
+3. **Create Todo List** _(skip if Phase 0 already built one)_
    - Use your available task tracking tool (e.g., TodoWrite, task lists) to break the plan into actionable tasks
    - Derive tasks from the plan's implementation units, dependencies, files, test targets, and verification criteria
    - Carry each unit's `Execution note` into the task when present
@@ -119,10 +143,11 @@ This command takes a work document (plan, specification, or todo file) and execu
    ```
    while (tasks remain):
      - Mark task as in-progress
-     - Read any referenced files from the plan
+     - Read any referenced files from the plan or discovered during Phase 0
      - Look for similar patterns in codebase
+     - Find existing test files for implementation files being changed (Test Discovery — see below)
      - Implement following existing conventions
-     - Write tests for new functionality
+     - Add, update, or remove tests to match implementation changes (see Test Discovery below)
      - Run System-Wide Test Check (see below)
      - Run tests after changes
      - Mark task as completed
@@ -136,6 +161,8 @@ This command takes a work document (plan, specification, or todo file) and execu
    - Do not skip verifying that a new test fails before implementing the fix or feature
    - Do not over-implement beyond the current behavior slice when working test-first
    - Skip test-first discipline for trivial renames, pure configuration, and pure styling work
+
+   **Test Discovery** — Before implementing changes to a file, find its existing test files (search for test/spec files that import, reference, or share naming patterns with the implementation file). When a plan specifies test scenarios or test files, start there, then check for additional test coverage the plan may not have enumerated. Changes to implementation files should be accompanied by corresponding test updates — new tests for new behavior, modified tests for changed behavior, removed or updated tests for deleted behavior.
 
    **Test Scenario Completeness** — Before writing tests for a feature-bearing unit, check whether the plan's `Test scenarios` cover all categories that apply to this unit. If a category is missing or scenarios are vague (e.g., "validates correctly" without naming inputs and expected outcomes), supplement from the unit's own context before writing tests:
 
@@ -205,7 +232,7 @@ This command takes a work document (plan, specification, or todo file) and execu
    - Run relevant tests after each significant change
    - Don't wait until the end to test
    - Fix failures immediately
-   - Add new tests for new functionality
+   - Add new tests for new behavior, update tests for changed behavior, remove tests for deleted behavior
    - **Unit tests with mocks prove logic in isolation. Integration tests with real objects prove the layers work together.** If your change touches callbacks, middleware, or error handling — you need both.
 
 5. **Simplify as You Go**
