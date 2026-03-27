@@ -88,7 +88,19 @@ gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name'
 
 If both fail, fall back to `main`.
 
-If there are no changes, report that and stop.
+If `git branch --show-current` returned an empty result, the repository is in detached HEAD state. Explain that a branch is required before committing and pushing. Ask whether to create a feature branch now. Use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). If no question tool is available, present the options and wait for the user's reply.
+
+- If the user agrees, derive a descriptive branch name from the change content, create it with `git checkout -b <branch-name>`, and use this new name as the branch name for the rest of the workflow.
+- If the user declines, stop.
+
+If there are no working tree changes (nothing staged, nothing modified), check whether there are unpushed commits or a missing PR before stopping:
+
+1. Check for unpushed commits: `git log @{u}..HEAD --oneline 2>/dev/null` (empty output means nothing to push; an error means no upstream is configured, so the branch needs its first push — treat as unpushed).
+2. Check for an existing PR using the method in Step 3.
+
+- If there are **unpushed commits**, skip Step 4 (commit) and continue from Step 5 (push).
+- If all commits are pushed but **no open PR exists**, skip Steps 4-5 and continue from Step 6 (write the PR description) and Step 7 (create the PR).
+- If all commits are pushed **and an open PR exists**, report that and stop -- there is nothing to do.
 
 ### Step 2: Determine conventions
 
@@ -100,18 +112,13 @@ Follow this priority order for commit messages *and* PR titles:
 
 ### Step 3: Check for existing PR
 
-If Step 1's `git branch --show-current` returned an empty result, the repository is in detached HEAD state. Explain that a branch is required before committing and pushing. Ask whether to create a feature branch now. Use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). If no question tool is available, present the options and wait for the user's reply.
-
-- If the user agrees, derive a descriptive branch name from the change content, create it with `git checkout -b <branch-name>`, then continue to Step 4.
-- If the user declines, stop.
-
-Otherwise, check for an existing open PR:
+Check for an existing open PR:
 
 ```bash
 gh pr list --head "<branch>" --json url,title,state --jq '.[0] // empty'
 ```
 
-Replace `<branch>` with the branch name from Step 1. The default `--state open` filter ensures only active PRs are matched -- closed or merged PRs are ignored automatically, so a new PR will be created.
+Replace `<branch>` with the current branch name (from Step 1, or the newly created branch if Step 1 resolved a detached HEAD). The default `--state open` filter ensures only active PRs are matched -- closed or merged PRs are ignored automatically, so a new PR will be created.
 
 Interpret the result:
 
