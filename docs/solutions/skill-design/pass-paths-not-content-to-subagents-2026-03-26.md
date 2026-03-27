@@ -72,6 +72,19 @@ When designing orchestrator skills that invoke sub-agents needing repo reference
 3. **Content-passing is acceptable when:** the reference material is small, static, and guaranteed to be fully consumed by every invocation (e.g., a JSON schema under 50 lines that the sub-agent always needs in full).
 4. **Signal to refactor:** if you catch an orchestrator reading file contents before invoking sub-agents, treat it as a candidate for the path-passing pattern.
 
+## Instruction phrasing matters more than meta-rules
+
+Empirical testing showed that how the skill phrases a search instruction has a dramatic effect on tool call count. For the same task (find ancestor CLAUDE.md/AGENTS.md files for changed paths):
+
+| Instruction phrasing | Claude Code tool calls | Codex shell commands |
+|---|---|---|
+| "for each changed file, walk its ancestor directories and check for X at each level" | 14 | 2 |
+| "find all X in the repo, then filter to ancestors of changed files" | 2 | 2 |
+
+The "per-item walk" phrasing caused Claude Code to glob each directory level individually. The "bulk find, then filter" phrasing produced two globs total. Codex was resilient to both phrasings (it wrote a Python script to batch the work either way).
+
+The takeaway: the most effective way to enforce efficient agent behavior is to write the correct instruction directly in the skill. Meta-rules in AGENTS.md about "how to phrase instructions efficiently" are too abstract to apply consistently — the person writing the skill won't remember them at the right moment. Instead, get the phrasing right in each skill where it matters, and document the pattern here for when someone asks why.
+
 ## Related
 
 - `docs/solutions/skill-design/compound-refresh-skill-improvements.md` — establishes "no shell commands for file operations in subagents"; complementary pattern about letting sub-agents use appropriate tools rather than orchestrating reads on their behalf
