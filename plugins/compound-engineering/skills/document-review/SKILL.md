@@ -1,11 +1,29 @@
 ---
 name: document-review
 description: Review requirements or plan documents using parallel persona agents that surface role-specific issues. Use when a requirements document or plan document exists and the user wants to improve it.
+argument-hint: "[path/to/document.md]"
 ---
 
 # Document Review
 
 Review requirements or plan documents through multi-persona analysis. Dispatches specialized reviewer agents in parallel, auto-fixes quality issues, and presents strategic questions for user decision.
+
+## Phase 0: Detect Mode
+
+Check the skill arguments or caller context for `mode:headless`. If present, set **headless mode** for the rest of the workflow.
+
+**Headless mode** is designed for programmatic callers (other skills, pipelines) that want document-review to fix everything it can and return unresolved findings as text -- without interactive questions. In this mode:
+- `auto` fixes are applied silently (same as interactive)
+- `batch_confirm` fixes are applied automatically (no approval prompt)
+- `present` findings are output as a text summary for the caller to handle
+- Phase 5 returns immediately with "Review complete" (no refine/complete question)
+
+Callers invoke headless mode by including `mode:headless` in the skill arguments, e.g.:
+```
+Skill("compound-engineering:document-review", "docs/plans/my-plan.md mode:headless")
+```
+
+If `mode:headless` is not present, the skill runs in its default interactive mode with no behavior change.
 
 ## Phase 1: Get and Analyze Document
 
@@ -173,6 +191,10 @@ Apply all `auto` findings to the document in a **single pass**:
 
 If any `batch_confirm` findings exist:
 
+**Headless mode:** Apply all `batch_confirm` fixes in a single pass without prompting. These findings have one clear correct answer -- in a programmatic pipeline the caller trusts document-review's judgment on them. Track applied fixes for the summary.
+
+**Interactive mode:**
+
 1. Present the proposed fixes in a numbered table (see template)
 2. **Ask for approval using the platform's interactive question tool** -- do not print the question as plain text output:
    - Claude Code: `AskUserQuestion`
@@ -188,6 +210,36 @@ If any `batch_confirm` findings exist:
 This turns N obvious-but-meaning-touching fixes into 1 interaction instead of N.
 
 ### Present Remaining Findings
+
+**Headless mode:** Do not use interactive question tools. Output the findings as a structured text summary the caller can parse and act on:
+
+```
+Document review complete (headless mode).
+
+Applied N auto-fixes and M batch-confirm fixes automatically.
+
+Remaining findings requiring judgment (K total):
+
+[P0] Section: <section> — <title> (<reviewer>, confidence <N>)
+  Why: <why_it_matters>
+  Suggested fix: <suggested_fix or "none">
+
+[P1] Section: <section> — <title> (<reviewer>, confidence <N>)
+  Why: <why_it_matters>
+  Suggested fix: <suggested_fix or "none">
+
+...
+
+Residual concerns:
+- <concern> (<source>)
+
+Deferred questions:
+- <question> (<source>)
+```
+
+Then proceed directly to Phase 5 (which returns immediately in headless mode).
+
+**Interactive mode:**
 
 Present `present` findings using the review output template included below. Within each severity level, separate findings by type:
 - **Errors** (design tensions, contradictions, incorrect statements) first -- these need resolution
@@ -207,6 +259,10 @@ During synthesis, discard any finding that recommends deleting or removing files
 These are pipeline artifacts and must not be flagged for removal.
 
 ## Phase 5: Next Action
+
+**Headless mode:** Return "Review complete" immediately. Do not ask questions. The caller receives the text summary from Phase 4 and handles any remaining findings.
+
+**Interactive mode:**
 
 **Ask using the platform's interactive question tool** -- do not print the question as plain text output:
 - Claude Code: `AskUserQuestion`
@@ -229,7 +285,7 @@ Return "Review complete" as the terminal signal for callers.
 - Do not add new sections or requirements the user didn't discuss
 - Do not over-engineer or add complexity
 - Do not create separate review files or add metadata sections
-- Do not modify any of the 2 caller skills (ce-brainstorm, ce-plan)
+- Do not modify caller skills (ce-brainstorm, ce-plan, or external plugin skills that invoke document-review)
 
 ## Iteration Guidance
 
