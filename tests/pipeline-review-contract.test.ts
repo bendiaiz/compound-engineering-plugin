@@ -68,9 +68,14 @@ describe("ce:plan review contract", () => {
   test("requires document review after confidence check", async () => {
     const content = await readRepoFile("plugins/compound-engineering/skills/ce-plan/SKILL.md")
 
-    // Phase 5.3.5 exists and runs document-review
-    expect(content).toContain("#### 5.3.5 Document Review")
+    // Phase 5.3.8 runs document-review before final checks (5.3.9)
+    expect(content).toContain("##### 5.3.8 Document Review")
     expect(content).toContain("`document-review` skill")
+
+    // Document review must come before final checks so auto-applied edits are validated
+    const docReviewIdx = content.indexOf("5.3.8 Document Review")
+    const finalChecksIdx = content.indexOf("5.3.9 Final Checks")
+    expect(docReviewIdx).toBeLessThan(finalChecksIdx)
   })
 
   test("uses headless mode in pipeline context", async () => {

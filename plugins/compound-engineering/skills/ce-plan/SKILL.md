@@ -862,18 +862,7 @@ If research reveals a product-level ambiguity that should change behavior or sco
 - Record it under `Open Questions`
 - Recommend `ce:brainstorm` if the gap is truly product-defining
 
-##### 5.3.8 Final Checks and Cleanup
-
-Before proceeding to post-generation options:
-- Confirm the plan is stronger in specific ways, not merely longer
-- Confirm the planning boundary is intact
-- Confirm origin decisions were preserved when an origin document exists
-
-If artifact-backed mode was used:
-- Clean up the temporary scratch directory after the plan is safely updated
-- If cleanup is not practical on the current platform, note where the artifacts were left
-
-#### 5.3.5 Document Review
+##### 5.3.8 Document Review
 
 After the confidence check (and any deepening), run the `document-review` skill on the plan file. Pass the plan path as the argument.
 
@@ -883,9 +872,20 @@ The confidence check and document-review are complementary:
 
 If document-review returns findings that were auto-applied, note them briefly when presenting handoff options. If residual P0/P1 findings were surfaced, mention them so the user can decide whether to address them before proceeding.
 
-When document-review returns "Review complete", proceed to Phase 5.4.
+When document-review returns "Review complete", proceed to Final Checks.
 
 **Pipeline mode:** If invoked from an automated workflow such as LFG, SLFG, or any `disable-model-invocation` context, run `document-review` with `mode:headless` and the plan path. Headless mode applies auto-fixes silently and returns structured findings without interactive prompts. Address any P0/P1 findings before returning control to the caller.
+
+##### 5.3.9 Final Checks and Cleanup
+
+Before proceeding to post-generation options:
+- Confirm the plan is stronger in specific ways, not merely longer
+- Confirm the planning boundary is intact
+- Confirm origin decisions were preserved when an origin document exists
+
+If artifact-backed mode was used:
+- Clean up the temporary scratch directory after the plan is safely updated
+- If cleanup is not practical on the current platform, note where the artifacts were left
 
 #### 5.4 Post-Generation Options
 
