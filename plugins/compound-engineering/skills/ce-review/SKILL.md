@@ -205,7 +205,7 @@ gh pr checkout <number-or-url>
 Then fetch PR metadata. Capture the base branch name and the PR base repository identity, not just the branch name:
 
 ```
-gh pr view <number-or-url> --json title,body,baseRefName,headRefName,url
+gh pr view <number-or-url> --json title,body,baseRefName,headRefName,url,author
 ```
 
 Use the repository portion of the returned PR URL as `<base-repo>` (for example, `EveryInc/compound-engineering-plugin` from `https://github.com/EveryInc/compound-engineering-plugin/pull/348`).
@@ -234,7 +234,7 @@ if [ -n "$PR_BASE_REF" ]; then BASE=$(git merge-base HEAD "$PR_BASE_REF" 2>/dev/
 if [ -n "$BASE" ]; then echo "BASE:$BASE" && echo "FILES:" && git diff --name-only $BASE && echo "DIFF:" && git diff -U10 $BASE && echo "UNTRACKED:" && git ls-files --others --exclude-standard; else echo "ERROR: Unable to resolve PR base branch <base> locally. Fetch the base branch and rerun so the review scope stays aligned with the PR."; fi
 ```
 
-Extract PR title/body, base branch, and PR URL from `gh pr view`, then extract the base marker, file list, diff content, and `UNTRACKED:` list from the local command. Do not use `gh pr diff` as the review scope after checkout -- it only reflects the remote PR state and will miss local fix commits until they are pushed. If the base ref still cannot be resolved from the PR's actual base repository after the fetch attempt, stop instead of falling back to `git diff HEAD`; a PR review without the PR base branch is incomplete.
+Extract PR title/body, base branch, PR URL, and author from `gh pr view`, then extract the base marker, file list, diff content, and `UNTRACKED:` list from the local command. Do not use `gh pr diff` as the review scope after checkout -- it only reflects the remote PR state and will miss local fix commits until they are pushed. If the base ref still cannot be resolved from the PR's actual base repository after the fetch attempt, stop instead of falling back to `git diff HEAD`; a PR review without the PR base branch is incomplete.
 
 **If a branch name is provided as an argument:**
 
@@ -425,7 +425,7 @@ Each persona sub-agent returns JSON matching the findings schema included below:
 Convert multiple reviewer JSON payloads into one deduplicated, confidence-gated finding set.
 
 1. **Validate.** Check each output against the schema. Drop malformed findings (missing required fields). Record the drop count.
-2. **Confidence gate.** Suppress findings below 0.60 confidence. Record the suppressed count. This matches the persona instructions: findings below 0.60 are noise and should not survive synthesis.
+2. **Confidence gate.** Suppress findings below 0.60 confidence. Exception: P0 findings at 0.50+ confidence survive the gate -- critical-but-uncertain issues must not be silently dropped. Record the suppressed count. This matches the persona instructions and the schema's confidence thresholds.
 3. **Deduplicate.** Compute fingerprint: `normalize(file) + line_bucket(line, +/-3) + normalize(title)`. When fingerprints match, merge: keep highest severity, keep highest confidence with strongest evidence, union evidence, note which reviewers flagged it.
 4. **Cross-reviewer agreement.** When 2+ independent reviewers flag the same issue (same fingerprint), boost the merged confidence by 0.10 (capped at 1.0). Cross-reviewer agreement is strong signal -- independent reviewers converging on the same issue is more reliable than any single reviewer's confidence. Note the agreement in the Reviewer column of the output (e.g., "security, correctness").
 5. **Separate pre-existing.** Pull out findings with `pre_existing: true` into a separate list.
@@ -518,7 +518,7 @@ Testing gaps:
 - <gap>
 
 Coverage:
-- Suppressed: <N> findings below 0.60 confidence
+- Suppressed: <N> findings below 0.60 confidence (P0 at 0.50+ retained)
 - Untracked files excluded: <file1>, <file2>
 - Failed reviewers: <reviewer>
 

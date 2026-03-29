@@ -33,7 +33,7 @@ Confidence rubric (0.0-1.0 scale):
 Suppress threshold: 0.60. Do not emit findings below 0.60 confidence (except P0 at 0.50+).
 
 False-positive categories to actively suppress:
-- Pre-existing issues unrelated to this diff (mark pre_existing: true only if the diff makes it newly relevant)
+- Pre-existing issues unrelated to this diff (mark pre_existing: true for unchanged code the diff does not interact with; if the diff makes it newly relevant, it is secondary, not pre-existing)
 - Pedantic style nitpicks that a linter/formatter would catch
 - Code that looks wrong but is intentional (check comments, commit messages, PR description for intent)
 - Issues already handled elsewhere in the codebase (check callers, guards, middleware)
