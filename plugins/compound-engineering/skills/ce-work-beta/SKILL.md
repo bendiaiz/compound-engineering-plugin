@@ -603,13 +603,15 @@ Each unit's result is written to `.context/compound-engineering/codex-delegation
 
 This loop replaces the "implement following existing conventions" step in Phase 2 for each unit when delegation is active. Initialize a `consecutive_failures` counter at 0 before the first delegated unit.
 
-**Clean-baseline preflight:** Before the first delegated unit, verify the working tree is clean:
+**Clean-baseline preflight:** Before the first delegated unit, verify there are no uncommitted changes to tracked files:
 
 ```bash
-test -z "$(git status --short)"
+git diff --quiet HEAD
 ```
 
-If dirty, stop and present options using the platform's blocking question tool: (1) commit current changes, (2) stash explicitly (`git stash push -m "pre-delegation"`), (3) continue in standard mode (sets `delegation_active` to false). Do not auto-stash user changes.
+This intentionally ignores untracked files (`??` in `git status`). Untracked workspace directories, `.context/` scratch files, and other user artifacts are irrelevant to rollback safety because `git checkout -- .` only touches tracked files. Only staged or unstaged modifications to tracked files make rollback unsafe.
+
+If tracked files are dirty, stop and present options using the platform's blocking question tool: (1) commit current changes, (2) stash explicitly (`git stash push -m "pre-delegation"`), (3) continue in standard mode (sets `delegation_active` to false). Do not auto-stash user changes.
 
 **Per-unit eligibility check:** Before delegating each unit, assess eligibility:
 - If the unit requires modifications outside the repository root -> execute locally in standard mode, state: "Unit <id> requires out-of-repo changes -- executing locally."
@@ -651,13 +653,22 @@ Do not improvise CLI flags or modify this invocation template.
 | 5 | Exit code 0, `status: "completed"`, VERIFY fails | Verify failure | Rollback current unit to HEAD. Increment `consecutive_failures`. |
 | 6 | Exit code 0, `status: "completed"`, VERIFY passes | Success | Commit changes. Reset `consecutive_failures` to 0. Clean up prompt and result files. |
 
-**Rollback procedure:** Rollback restores the working tree to HEAD:
+**Rollback procedure:** Rollback reverts tracked file changes and removes only files created by the delegation:
 
 ```bash
-git checkout -- . && git clean -fd
+# Revert all tracked file modifications to HEAD
+git checkout -- .
+
+# Remove only NEW untracked files within the unit's declared file scope
+# (files from the implementation unit's Files list)
+git clean -fd -- <paths from the unit's Files list>
+
+# Also clean up this unit's delegation scratch files
+rm -f .context/compound-engineering/codex-delegation/prompt-<unit-id>.md
+rm -f .context/compound-engineering/codex-delegation/result-<unit-id>.json
 ```
 
-This is safe because delegated mode starts from a clean baseline and never auto-stashes user-owned local changes.
+Do NOT use bare `git clean -fd` without path arguments -- that destroys all untracked files in the repo, including workspace directories, `.context/` scratch from other workflows, and user artifacts unrelated to delegation. Scoping the clean to the unit's declared files ensures rollback only removes what delegation created.
 
 **Commit on success:** After each successful unit, commit the changes immediately:
 

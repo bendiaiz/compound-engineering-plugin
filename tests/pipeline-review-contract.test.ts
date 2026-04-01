@@ -185,8 +185,9 @@ describe("ce:work-beta codex delegation contract", () => {
     const content = await readRepoFile("plugins/compound-engineering/skills/ce-work-beta/SKILL.md")
 
     expect(content).toContain("Clean-baseline preflight")
-    expect(content).toContain("git status --short")
-    expect(content).toContain("git checkout -- . && git clean -fd")
+    expect(content).toContain("git diff --quiet HEAD")
+    expect(content).toContain("git checkout -- .")
+    expect(content).toContain("Do NOT use bare `git clean -fd` without path arguments")
   })
 
   test("has result classification table with all categories", async () => {
