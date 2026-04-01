@@ -1,5 +1,5 @@
 ---
-title: "Codex Delegation Orchestration Economics"
+title: "Codex Delegation Best Practices"
 date: 2026-04-01
 category: best-practices
 module: "Codex delegation / skill design"
@@ -21,7 +21,7 @@ tags:
   - ce-work-beta
 ---
 
-# Codex Delegation Orchestration Economics
+# Codex Delegation Best Practices
 
 ## Context
 
