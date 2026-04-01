@@ -65,6 +65,9 @@ describe("writeQwenBundle", () => {
 
     const result = JSON.parse(await fs.readFile(path.join(tempRoot, "qwen-extension.json"), "utf8"))
     expect(result.customField).toBe("should-survive")
+    // Tracking key should be written so future installs can prune stale plugin keys
+    expect(result._compound_managed_keys).toBeInstanceOf(Array)
+    expect(result._compound_managed_keys).not.toContain("customField")
   })
 
   test("prunes stale servers from legacy config without tracking key", async () => {
