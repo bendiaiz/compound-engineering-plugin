@@ -93,18 +93,18 @@ describe("ce:work review contract", () => {
 
     expect(content).not.toContain("## Argument Parsing")
     expect(content).not.toContain("## Codex Delegation Mode")
-    expect(content).not.toContain("delegate:codex")
+    expect(content).not.toContain("mode:codex")
   })
 })
 
 describe("ce:work-beta codex delegation contract", () => {
-  test("has argument parsing with delegate tokens", async () => {
+  test("has argument parsing with mode tokens", async () => {
     const content = await readRepoFile("plugins/compound-engineering/skills/ce-work-beta/SKILL.md")
 
-    // Argument parsing section exists with delegation tokens
+    // Argument parsing section exists with mode tokens
     expect(content).toContain("## Argument Parsing")
-    expect(content).toContain("`delegate:codex`")
-    expect(content).toContain("`delegate:local`")
+    expect(content).toContain("`mode:codex`")
+    expect(content).toContain("`mode:local`")
 
     // Resolution chain present
     expect(content).toContain("### Settings Resolution Chain")
@@ -112,11 +112,11 @@ describe("ce:work-beta codex delegation contract", () => {
     expect(content).toContain("compound-engineering.local.md")
   })
 
-  test("argument-hint includes delegate:codex for discoverability", async () => {
+  test("argument-hint includes mode:codex for discoverability", async () => {
     const content = await readRepoFile("plugins/compound-engineering/skills/ce-work-beta/SKILL.md")
 
     expect(content).toContain("argument-hint:")
-    expect(content).toContain("delegate:codex")
+    expect(content).toContain("mode:codex")
   })
 
   test("remains manual-invocation beta during rollout", async () => {
@@ -236,7 +236,7 @@ describe("ce:plan remains neutral during ce:work-beta rollout", () => {
     expect(content).not.toContain("Execution note: Execution target: external-delegate")
 
     // Planner stays neutral instead of teaching beta-only invocation
-    expect(content).not.toContain("delegate:codex")
+    expect(content).not.toContain("mode:codex")
   })
 })
 

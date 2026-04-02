@@ -22,7 +22,7 @@ Users running ce:work from Claude Code (or other non-Codex agents) want to deleg
 
 - R1. Optional mode within ce:work, not separate skill; ce-work-beta superseded
 - R2. Resolution chain: argument > local.md > hard default (off)
-- R3-R4. `delegate:codex` / `delegate:local` canonical tokens with bounded imperative fuzzy matching
+- R3-R4. `mode:codex` / `mode:local` canonical tokens with bounded imperative fuzzy matching
 - R5. Plan-only delegation; per-unit eligibility pre-screening (out-of-repo checks, trivial-work exclusions)
 - R6-R7. Environment guard (Codex sandbox detection); skill-level logic, no converter changes
 - R8-R9. Availability check; no version gating
@@ -108,7 +108,7 @@ The delegation mode adds three sections to ce:work's SKILL.md:
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │ + ## Argument Parsing                                       │
-│   Parse delegate:codex / delegate:local tokens              │
+│   Parse mode:codex / mode:local tokens              │
 │   Read local.md for work_delegate fallback                  │
 │   Resolve delegation state: on/off + sandbox mode           │
 │                                                             │
@@ -156,7 +156,7 @@ graph TB
 
 - [x] **Unit 1: Argument Parsing and Settings Reading**
 
-**Goal:** Add `delegate:codex` / `delegate:local` token parsing to ce:work and the resolution chain that reads local.md settings.
+**Goal:** Add `mode:codex` / `mode:local` token parsing to ce:work and the resolution chain that reads local.md settings.
 
 **Requirements:** R2, R3, R4, R22
 
@@ -165,15 +165,15 @@ graph TB
 **Files:**
 - Modify: `plugins/compound-engineering/skills/ce-work/SKILL.md`
 - Test: `tests/pipeline-review-contract.test.ts`
-- Test: manual invocation testing with `delegate:codex`, `delegate:local`, and fuzzy variants
+- Test: manual invocation testing with `mode:codex`, `mode:local`, and fuzzy variants
 
 **Approach:**
 - Add an `## Argument Parsing` section immediately before the `## Phase 0: Input Triage` heading (after the opening narrative), following ce:review's canonical pattern (token table, strip-before-interpret). Cross-reference the High-Level Technical Design diagram for placement.
-- Token table: `delegate:codex` (activate), `delegate:local` (deactivate), plus bounded fuzzy recognition for delegate activation phrases. Do not add `mode:headless` here; ce:work remains an interactive workflow.
+- Token table: `mode:codex` (activate), `mode:local` (deactivate), plus bounded fuzzy recognition for delegate activation phrases. Do not add `mode:headless` here; ce:work remains an interactive workflow.
 - After token extraction, read `.claude/compound-engineering.local.md` for `work_delegate`, `work_delegate_consent`, `work_delegate_sandbox` keys
 - Implement resolution chain: argument flag > local.md `work_delegate` > hard default `false`
 - Store resolved delegation state (on/off) and sandbox mode in skill-level variables for downstream consumption
-- Update the `argument-hint` frontmatter to include `delegate:codex` for discoverability
+- Update the `argument-hint` frontmatter to include `mode:codex` for discoverability
 - Follow learning: mode must be explicit opt-in via arguments, not auto-detected (compound-refresh pattern)
 
 **Patterns to follow:**
@@ -182,11 +182,11 @@ graph TB
 - YAML frontmatter parsing: agent reads file, extracts content between `---` delimiters, interprets keys
 
 **Test scenarios:**
-- Happy path: `delegate:codex` in arguments sets delegation on with default yolo sandbox
-- Happy path: `delegate:local` in arguments sets delegation off even when local.md has `work_delegate: codex`
+- Happy path: `mode:codex` in arguments sets delegation on with default yolo sandbox
+- Happy path: `mode:local` in arguments sets delegation off even when local.md has `work_delegate: codex`
 - Happy path: No delegate token with `work_delegate: codex` in local.md activates delegation
 - Happy path: No delegate token and no local.md setting defaults to delegation off
-- Edge case: `delegate:codex` combined with a plan file path — both are parsed correctly, plan path preserved
+- Edge case: `mode:codex` combined with a plan file path — both are parsed correctly, plan path preserved
 - Edge case: Fuzzy variant "use codex for this work" recognized as delegation activation
 - Edge case: Bare prompt "fix codex converter bugs" does not activate delegation
 - Edge case: Missing or empty local.md file — falls back to hard defaults gracefully
@@ -195,7 +195,7 @@ graph TB
 **Verification:**
 - Delegation state resolves correctly for all combinations of argument + local.md + default
 - Plan file paths are not corrupted by token stripping
-- Argument-hint frontmatter includes delegate:codex
+- Argument-hint frontmatter includes mode:codex
 - Contract tests cover the new token/wording expectations
 
 ---
@@ -230,11 +230,11 @@ graph TB
 - Happy path: Outside Codex, CLI available, consent already granted — proceeds to delegation
 - Happy path: First-time consent flow — warning shown, user accepts yolo, settings written to local.md
 - Happy path: First-time consent — user chooses full-auto, setting stored correctly
-- Error path: Inside Codex sandbox with explicit `delegate:codex` argument — notification emitted, falls back to standard mode
+- Error path: Inside Codex sandbox with explicit `mode:codex` argument — notification emitted, falls back to standard mode
 - Error path: Inside Codex sandbox with only local.md default — silent fallback, no notification
 - Error path: `codex` CLI not on PATH — notification emitted, falls back to standard mode
 - Error path: User declines consent — asked about disabling, if yes `work_delegate: false` set
-- Edge case: Delegation enabled via local.md default on first invocation (no delegate:codex argument) — consent flow shown as normal, because R10 triggers on "first time delegation activates" regardless of activation source
+- Edge case: Delegation enabled via local.md default on first invocation (no mode:codex argument) — consent flow shown as normal, because R10 triggers on "first time delegation activates" regardless of activation source
 
 **Verification:**
 - Environment guard correctly detects Codex sandbox and falls back
@@ -273,7 +273,7 @@ graph TB
 - Happy path: Delegation off — existing execution strategy selection unchanged
 - Edge case: Delegation active but bare prompt (no plan) — falls back to standard mode
 - Edge case: slfg requests swarm mode but local.md has `work_delegate: codex` — delegation wins, serial execution enforced, swarm mode suppressed with notification
-- Edge case: User explicitly passes `delegate:codex` AND requests swarm mode — delegation wins, swarm suppressed with notification
+- Edge case: User explicitly passes `mode:codex` AND requests swarm mode — delegation wins, swarm suppressed with notification
 
 **Verification:**
 - Serial execution enforced when delegation active with a plan
@@ -438,7 +438,7 @@ graph TB
 - **Interaction graph:** ce:work's Phase 2 task execution loop gains a delegation branch. Phase 1 Step 4 gains a routing gate. The Swarm Mode section gains a mutual exclusivity note. Phase 3 is unchanged. Phase 4 only gains mixed-model attribution guidance carried over from ce-work-beta.
 - **Error propagation:** CLI failures cause rollback of the current delegated unit to `HEAD` and hard fallback to standard mode for all remaining units. Task/verify failures count toward the circuit breaker and trigger per-unit rollback. Partial success is a handoff path: finish the same unit locally, then commit before continuing.
 - **State lifecycle risks:** Delegated mode now refuses to start from a dirty tree, including in an existing worktree checkout. This is a deliberate safety tradeoff that avoids automation-owned stash state and keeps `HEAD` rollback safe. The mandatory commit after each successful or locally-completed partial unit prevents cross-unit entanglement.
-- **API surface parity:** `delegate:codex` is the new argument namespace. Converters rewrite `.claude/` paths in local.md references to platform equivalents (`.codex/`, `.opencode/`). The old `Execution target: external-delegate` contract is removed from live skills. No new ce:work-wide non-interactive mode is introduced.
+- **API surface parity:** `mode:codex` is the new argument namespace. Converters rewrite `.claude/` paths in local.md references to platform equivalents (`.codex/`, `.opencode/`). The old `Execution target: external-delegate` contract is removed from live skills. No new ce:work-wide non-interactive mode is introduced.
 - **Integration coverage:** The delegation flow crosses ce:work -> bash (codex exec) -> codex CLI -> file system (result JSON, prompt files) -> git. End-to-end testing requires a working codex CLI installation.
 - **Unchanged invariants:** ce:work's existing argument handling for file paths and bare prompts is preserved. Users who never enable delegation experience zero behavioral change. Phase 3 remains unchanged; Phase 4 keeps its existing ship flow aside from mixed-model attribution guidance.
 

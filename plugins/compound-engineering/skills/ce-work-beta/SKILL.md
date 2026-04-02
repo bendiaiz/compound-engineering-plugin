@@ -2,7 +2,7 @@
 name: ce:work-beta
 description: "[BETA] Execute work with external delegate support. Same as ce:work but includes experimental Codex delegation mode for token-conserving code implementation."
 disable-model-invocation: true
-argument-hint: "[Plan doc path or description of work. Blank to auto use latest plan doc] [delegate:codex]"
+argument-hint: "[Plan doc path or description of work. Blank to auto use latest plan doc] [mode:codex]"
 ---
 
 # Work Execution Command
@@ -25,20 +25,20 @@ Parse `$ARGUMENTS` for the following optional tokens. Strip each recognized toke
 
 | Token | Example | Effect |
 |-------|---------|--------|
-| `delegate:codex` | `delegate:codex` | Activate Codex delegation mode for plan execution |
-| `delegate:local` | `delegate:local` | Deactivate delegation even if enabled in local.md |
+| `mode:codex` | `mode:codex` | Activate Codex delegation mode for plan execution |
+| `mode:local` | `mode:local` | Deactivate delegation even if enabled in local.md |
 
 All tokens are optional. When absent, fall back to the resolution chain below.
 
-**Fuzzy activation:** Also recognize imperative delegation-intent phrases such as "use codex", "delegate to codex", "codex mode", or "delegate mode" as equivalent to `delegate:codex`. A bare mention of "codex" in a prompt (e.g., "fix codex converter bugs") must NOT activate delegation -- only clear delegation intent triggers it.
+**Fuzzy activation:** Also recognize imperative delegation-intent phrases such as "use codex", "delegate to codex", "codex mode", or "delegate mode" as equivalent to `mode:codex`. A bare mention of "codex" in a prompt (e.g., "fix codex converter bugs") must NOT activate delegation -- only clear delegation intent triggers it.
 
-**Fuzzy deactivation:** Also recognize phrases such as "no codex", "local mode", "standard mode" as equivalent to `delegate:local`.
+**Fuzzy deactivation:** Also recognize phrases such as "no codex", "local mode", "standard mode" as equivalent to `mode:local`.
 
 ### Settings Resolution Chain
 
 After extracting tokens from arguments, resolve the delegation state using this precedence chain:
 
-1. **Argument flag** -- `delegate:codex` or `delegate:local` from the current invocation (highest priority)
+1. **Argument flag** -- `mode:codex` or `mode:local` from the current invocation (highest priority)
 2. **local.md setting** -- Read `.claude/compound-engineering.local.md` and extract `work_delegate` from YAML frontmatter. Value `codex` activates delegation; `false` deactivates.
 3. **Hard default** -- `false` (delegation off)
 

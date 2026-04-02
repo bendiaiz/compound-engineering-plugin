@@ -18,7 +18,7 @@ ce-work-beta does have a structured 7-step External Delegate Mode (environment g
 ## Delegation Flow
 
 ```
-/ce:work delegate:codex ~/plan.md
+/ce:work mode:codex ~/plan.md
          │
          ▼
 ┌──────────────────────────┐
@@ -88,8 +88,8 @@ ce-work-beta does have a structured 7-step External Delegate Mode (environment g
 
 - R1. Codex delegation is an optional mode within ce:work, not a separate skill. ce-work-beta is superseded: its delegation logic is replaced by this feature; its non-delegation features (e.g., Frontend Design Guidance) should be ported to ce:work as a separate concern if valuable. Disposition of ce-work-beta (delete vs. retain without delegation) is a planning decision, not a product decision.
 - R2. Delegation is triggered via a resolution chain: (1) per-invocation argument wins, (2) `work_delegate` setting in `.claude/compound-engineering.local.md` is fallback, (3) hard default is `false` (off).
-- R3. Canonical activation argument is `delegate:codex`. The skill also recognizes fuzzy variants: `codex mode`, `codex`, `delegate codex`, and similar intent expressions. Agent intent recognition handles the fuzzy matching — the set does not need to be exhaustively enumerated.
-- R4. Canonical deactivation argument is `delegate:local`. Also recognizes fuzzy variants like `no codex`, `local mode`, `standard mode`.
+- R3. Canonical activation argument is `mode:codex`. The skill also recognizes fuzzy variants: `codex mode`, `codex`, `delegate codex`, and similar intent expressions. Agent intent recognition handles the fuzzy matching — the set does not need to be exhaustively enumerated.
+- R4. Canonical deactivation argument is `mode:local`. Also recognizes fuzzy variants like `no codex`, `local mode`, `standard mode`.
 - R5. Delegation only applies to structured plan execution. Ad-hoc prompts without a plan file always use standard mode regardless of the delegation setting. When delegation mode is active for a plan, each implementation unit is delegated to Codex by default. The agent may execute a unit locally in standard mode when: (a) the unit explicitly requires modifications outside the repository root, or (b) the unit is trivially small (single-file config change, simple substitution) where delegation overhead exceeds the work. The agent states which mode it's using for each unit before execution.
 
 **Environment Safety**
@@ -201,7 +201,7 @@ ce-work-beta does have a structured 7-step External Delegate Mode (environment g
 ## Key Decisions
 
 - **Modify ce:work, not a separate skill**: Avoids skill proliferation. Users stay in their existing workflow. ce-work-beta's delegation section is superseded; its structural patterns (guards, circuit breaker) are ported.
-- **`delegate:codex` namespace, not `mode:codex`**: Existing `mode:` tokens describe interaction style (headless, autofix). Delegation describes execution target. Separate namespace avoids semantic overloading.
+- **`mode:codex` namespace**: Short, natural, consistent with how users think about switching modes ("use codex mode"). The `mode:` prefix is generic enough to support future delegates without renaming.
 - **Bare `codex exec` over app-server**: App server offers structured output and thread management, but requires fragile path discovery into another plugin's versioned install directory. `codex exec` is one line of bash, works identically in subagents, and does exactly what fire-and-wait delegation needs.
 - **User-selected sandbox mode (yolo default, full-auto option)**: yolo is recommended because `--full-auto` blocks network access needed for test/lint commands. But users who prefer sandboxed execution can choose `full-auto`, accepting that verification may fail. The circuit breaker handles repeated failures.
 - **One-time consent with mode selection**: Consent is about informed awareness, not ongoing compliance. The sandbox mode choice is part of the consent flow and persisted in local.md.
