@@ -1,6 +1,7 @@
 import path from "path"
 import { backupFile, copyDir, ensureDir, readJson, resolveCommandPath, sanitizePathName, pathExists, writeJsonSecure, writeText } from "../utils/files"
 import type { QwenBundle, QwenExtensionConfig } from "../types/qwen"
+import { cleanupStaleSkillDirs, cleanupStaleAgents } from "../utils/legacy-cleanup"
 
 export async function writeQwenBundle(outputRoot: string, bundle: QwenBundle): Promise<void> {
   const qwenPaths = resolveQwenPaths(outputRoot)
@@ -35,6 +36,11 @@ export async function writeQwenBundle(outputRoot: string, bundle: QwenBundle): P
     const dest = await resolveCommandPath(commandsDir, commandFile.name, ".md")
     await writeText(dest, commandFile.content + "\n")
   }
+
+  // TODO(cleanup): Remove after v3 transition (circa Q3 2026)
+  await cleanupStaleSkillDirs(qwenPaths.skillsDir)
+  await cleanupStaleAgents(agentsDir, ".yaml")
+  await cleanupStaleAgents(agentsDir, ".md")
 
   // Copy skills
   if (bundle.skillDirs.length > 0) {

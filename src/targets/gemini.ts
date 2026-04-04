@@ -2,10 +2,14 @@ import path from "path"
 import { backupFile, copySkillDir, ensureDir, pathExists, readJson, resolveCommandPath, sanitizePathName, writeJson, writeText } from "../utils/files"
 import { transformContentForGemini } from "../converters/claude-to-gemini"
 import type { GeminiBundle } from "../types/gemini"
+import { cleanupStaleSkillDirs } from "../utils/legacy-cleanup"
 
 export async function writeGeminiBundle(outputRoot: string, bundle: GeminiBundle): Promise<void> {
   const paths = resolveGeminiPaths(outputRoot)
   await ensureDir(paths.geminiDir)
+
+  // TODO(cleanup): Remove after v3 transition (circa Q3 2026)
+  await cleanupStaleSkillDirs(paths.skillsDir)
 
   if (bundle.generatedSkills.length > 0) {
     for (const skill of bundle.generatedSkills) {
