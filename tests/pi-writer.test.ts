@@ -15,6 +15,31 @@ async function exists(filePath: string): Promise<boolean> {
 }
 
 describe("writePiBundle", () => {
+  test("removes stale generated agent skills without touching prompt files", async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "pi-cleanup-targets-"))
+    const outputRoot = path.join(tempRoot, ".pi")
+
+    await fs.mkdir(path.join(outputRoot, "skills", "lint"), { recursive: true })
+    await fs.writeFile(
+      path.join(outputRoot, "skills", "lint", "SKILL.md"),
+      `---\nname: lint\ndescription: ${JSON.stringify("Use this agent when you need to run linting and code quality checks on Ruby and ERB files. Run before pushing to origin.")}\n---\n\nLegacy agent\n`,
+    )
+    await fs.mkdir(path.join(outputRoot, "prompts"), { recursive: true })
+    await fs.writeFile(path.join(outputRoot, "prompts", "lint.md"), "user-owned prompt")
+
+    const bundle: PiBundle = {
+      prompts: [],
+      skillDirs: [],
+      generatedSkills: [],
+      extensions: [],
+    }
+
+    await writePiBundle(outputRoot, bundle)
+
+    expect(await exists(path.join(outputRoot, "skills", "lint"))).toBe(false)
+    expect(await exists(path.join(outputRoot, "prompts", "lint.md"))).toBe(true)
+  })
+
   test("writes prompts, skills, extensions, mcporter config, and AGENTS.md block", async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "pi-writer-"))
     const outputRoot = path.join(tempRoot, ".pi")

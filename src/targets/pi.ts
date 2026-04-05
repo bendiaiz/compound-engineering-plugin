@@ -37,7 +37,7 @@ export async function writePiBundle(outputRoot: string, bundle: PiBundle): Promi
 
   // TODO(cleanup): Remove after v3 transition (circa Q3 2026)
   await cleanupStaleSkillDirs(paths.skillsDir)
-  await cleanupStaleAgents(paths.promptsDir, ".md")
+  await cleanupStaleAgents(paths.skillsDir, null)
 
   for (const prompt of bundle.prompts) {
     await writeText(path.join(paths.promptsDir, `${sanitizePathName(prompt.name)}.md`), prompt.content + "\n")

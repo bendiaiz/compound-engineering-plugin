@@ -21,9 +21,14 @@ export async function writeQwenBundle(outputRoot: string, bundle: QwenBundle): P
     await writeText(qwenPaths.contextPath, bundle.contextFile + "\n")
   }
 
+  // TODO(cleanup): Remove after v3 transition (circa Q3 2026)
+  await cleanupStaleSkillDirs(qwenPaths.skillsDir)
+
   // Write agents
   const agentsDir = qwenPaths.agentsDir
   await ensureDir(agentsDir)
+  await cleanupStaleAgents(agentsDir, ".yaml")
+  await cleanupStaleAgents(agentsDir, ".md")
   for (const agent of bundle.agents) {
     const ext = agent.format === "yaml" ? "yaml" : "md"
     await writeText(path.join(agentsDir, `${sanitizePathName(agent.name)}.${ext}`), agent.content + "\n")
@@ -36,11 +41,6 @@ export async function writeQwenBundle(outputRoot: string, bundle: QwenBundle): P
     const dest = await resolveCommandPath(commandsDir, commandFile.name, ".md")
     await writeText(dest, commandFile.content + "\n")
   }
-
-  // TODO(cleanup): Remove after v3 transition (circa Q3 2026)
-  await cleanupStaleSkillDirs(qwenPaths.skillsDir)
-  await cleanupStaleAgents(agentsDir, ".yaml")
-  await cleanupStaleAgents(agentsDir, ".md")
 
   // Copy skills
   if (bundle.skillDirs.length > 0) {
