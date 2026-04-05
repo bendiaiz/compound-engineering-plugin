@@ -200,13 +200,13 @@ After testing:
 
 ```bash
 # Test with default scheme
-/test-xcode
+/ce-test-xcode
 
 # Test specific scheme
-/test-xcode MyApp-Debug
+/ce-test-xcode MyApp-Debug
 
 # Test after making changes
-/test-xcode current
+/ce-test-xcode current
 ```
 
 ## Integration with ce-code-review
