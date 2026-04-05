@@ -23,6 +23,34 @@ const emptyBundle: KiroBundle = {
 }
 
 describe("writeKiroBundle", () => {
+  test("removes legacy Kiro agent config and prompt files during rename cleanup", async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "kiro-cleanup-"))
+    const kiroRoot = path.join(tempRoot, ".kiro")
+    await fs.mkdir(path.join(kiroRoot, "agents", "prompts"), { recursive: true })
+
+    await fs.writeFile(
+      path.join(kiroRoot, "agents", "lint.json"),
+      JSON.stringify({
+        name: "lint",
+        description: "Legacy lint agent",
+        prompt: "file://./prompts/lint.md",
+        tools: ["*"],
+        resources: ["file://.kiro/steering/**/*.md", "skill://.kiro/skills/**/SKILL.md"],
+        includeMcpJson: true,
+        welcomeMessage: "Switching to the lint agent. Legacy lint agent",
+      }),
+    )
+    await fs.writeFile(
+      path.join(kiroRoot, "agents", "prompts", "lint.md"),
+      "Legacy lint prompt\n",
+    )
+
+    await writeKiroBundle(kiroRoot, emptyBundle)
+
+    expect(await exists(path.join(kiroRoot, "agents", "lint.json"))).toBe(false)
+    expect(await exists(path.join(kiroRoot, "agents", "prompts", "lint.md"))).toBe(false)
+  })
+
   test("writes agents, skills, steering, and mcp.json", async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "kiro-test-"))
     const bundle: KiroBundle = {

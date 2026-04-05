@@ -130,6 +130,12 @@ const STALE_PROMPT_FILES = [
   "ce-work-beta.md",
 ]
 
+const LEGACY_SKILL_DESCRIPTION_ALIASES: Record<string, string[]> = {
+  setup: [
+    "Configure project-level settings for compound-engineering workflows. Currently a placeholder — review agent selection is handled automatically by ce:review.",
+  ],
+}
+
 type LegacyFingerprints = {
   skills: Map<string, string>
   agents: Map<string, string>
@@ -268,10 +274,49 @@ async function isLegacyPluginOwned(
   expectedDescription: string | undefined,
   extension: string | null,
 ): Promise<boolean> {
+  if (extension === ".json") {
+    return isLegacyKiroAgentConfig(targetPath)
+  }
+
+  if (extension === ".md" && path.basename(path.dirname(targetPath)) === "prompts") {
+    return isLegacyKiroPrompt(targetPath)
+  }
+
   if (!expectedDescription) return false
   const filePath = extension === null ? path.join(targetPath, "SKILL.md") : targetPath
   const actualDescription = await readDescription(filePath)
-  return actualDescription === expectedDescription
+  if (actualDescription === expectedDescription) return true
+
+  const aliases = extension === null
+    ? LEGACY_SKILL_DESCRIPTION_ALIASES[path.basename(targetPath)] ?? []
+    : []
+  return aliases.includes(actualDescription ?? "")
+}
+
+async function isLegacyKiroAgentConfig(targetPath: string): Promise<boolean> {
+  try {
+    const raw = await fs.readFile(targetPath, "utf8")
+    const parsed = JSON.parse(raw) as Record<string, unknown>
+    const fileName = path.basename(targetPath, ".json")
+    const resources = Array.isArray(parsed.resources) ? parsed.resources : []
+    const tools = Array.isArray(parsed.tools) ? parsed.tools : []
+
+    return parsed.name === fileName
+      && parsed.prompt === `file://./prompts/${fileName}.md`
+      && parsed.includeMcpJson === true
+      && tools.length === 1
+      && tools[0] === "*"
+      && resources.includes("file://.kiro/steering/**/*.md")
+      && resources.includes("skill://.kiro/skills/**/SKILL.md")
+  } catch {
+    return false
+  }
+}
+
+async function isLegacyKiroPrompt(targetPath: string): Promise<boolean> {
+  const agentName = path.basename(targetPath, ".md")
+  const siblingConfigPath = path.join(path.dirname(path.dirname(targetPath)), `${agentName}.json`)
+  return isLegacyKiroAgentConfig(siblingConfigPath)
 }
 
 async function removeIfExists(targetPath: string): Promise<boolean> {

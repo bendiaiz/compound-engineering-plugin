@@ -129,6 +129,22 @@ describe("cleanupStaleSkillDirs", () => {
     expect(removed).toBe(0)
     expect(await exists(path.join(root, "setup"))).toBe(true)
   })
+
+  test("removes legacy setup skill even when current description has drifted", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "cleanup-setup-legacy-"))
+    await createDir(
+      path.join(root, "setup"),
+      skillContent(
+        "setup",
+        "Configure project-level settings for compound-engineering workflows. Currently a placeholder — review agent selection is handled automatically by ce:review.",
+      ),
+    )
+
+    const removed = await cleanupStaleSkillDirs(root)
+
+    expect(removed).toBe(1)
+    expect(await exists(path.join(root, "setup"))).toBe(false)
+  })
 })
 
 describe("cleanupStaleAgents", () => {

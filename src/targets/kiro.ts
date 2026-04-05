@@ -10,8 +10,8 @@ export async function writeKiroBundle(outputRoot: string, bundle: KiroBundle): P
 
   // TODO(cleanup): Remove after v3 transition (circa Q3 2026)
   await cleanupStaleSkillDirs(paths.skillsDir)
-  await cleanupStaleAgents(paths.agentsDir, ".json")
   await cleanupStaleAgents(path.join(paths.agentsDir, "prompts"), ".md")
+  await cleanupStaleAgents(paths.agentsDir, ".json")
 
   // Write agents
   if (bundle.agents.length > 0) {
