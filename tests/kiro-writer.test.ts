@@ -3,6 +3,7 @@ import { promises as fs } from "fs"
 import path from "path"
 import os from "os"
 import { writeKiroBundle } from "../src/targets/kiro"
+import { parseFrontmatter } from "../src/utils/frontmatter"
 import type { KiroBundle } from "../src/types/kiro"
 
 async function exists(filePath: string): Promise<boolean> {
@@ -12,6 +13,15 @@ async function exists(filePath: string): Promise<boolean> {
   } catch {
     return false
   }
+}
+
+async function pluginDescription(relativePath: string): Promise<string> {
+  const raw = await fs.readFile(path.join(import.meta.dir, "..", relativePath), "utf8")
+  const { data } = parseFrontmatter(raw, relativePath)
+  if (typeof data.description !== "string") {
+    throw new Error(`Missing description in ${relativePath}`)
+  }
+  return data.description
 }
 
 const emptyBundle: KiroBundle = {
@@ -27,17 +37,18 @@ describe("writeKiroBundle", () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "kiro-cleanup-"))
     const kiroRoot = path.join(tempRoot, ".kiro")
     await fs.mkdir(path.join(kiroRoot, "agents", "prompts"), { recursive: true })
+    const lintDescription = await pluginDescription("plugins/compound-engineering/agents/workflow/ce-lint.md")
 
     await fs.writeFile(
       path.join(kiroRoot, "agents", "lint.json"),
       JSON.stringify({
         name: "lint",
-        description: "Legacy lint agent",
+        description: lintDescription,
         prompt: "file://./prompts/lint.md",
         tools: ["*"],
         resources: ["file://.kiro/steering/**/*.md", "skill://.kiro/skills/**/SKILL.md"],
         includeMcpJson: true,
-        welcomeMessage: "Switching to the lint agent. Legacy lint agent",
+        welcomeMessage: `Switching to the lint agent. ${lintDescription}`,
       }),
     )
     await fs.writeFile(

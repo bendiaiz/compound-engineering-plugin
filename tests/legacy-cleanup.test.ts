@@ -45,6 +45,25 @@ function promptWrapperContent(skillName: string, description: string, body = "Bo
   return `---\ndescription: ${JSON.stringify(description)}\n---\n\nUse the $${skillName} skill for this command and follow its instructions.\n\n${body}\n`
 }
 
+function legacyWorkflowPromptContent(skillName: string, description: string) {
+  return `---\ndescription: ${JSON.stringify(description)}\n---\n\nUse the ${skillName} skill for this workflow and follow its instructions exactly.\n\nTreat any text after the prompt name as the workflow context to pass through.\n`
+}
+
+function kiroAgentConfigContent(name: string, description: string) {
+  return JSON.stringify({
+    name,
+    description,
+    prompt: `file://./prompts/${name}.md`,
+    tools: ["*"],
+    resources: [
+      "file://.kiro/steering/**/*.md",
+      "skill://.kiro/skills/**/SKILL.md",
+    ],
+    includeMcpJson: true,
+    welcomeMessage: `Switching to the ${name} agent. ${description}`,
+  })
+}
+
 describe("cleanupStaleSkillDirs", () => {
   test("removes known stale skill directories", async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), "cleanup-skills-"))
@@ -199,6 +218,38 @@ describe("cleanupStaleAgents", () => {
     expect(await exists(path.join(root, "security-sentinel.agent.md"))).toBe(false)
   })
 
+  test("removes matching Kiro agent configs but preserves same-named user configs", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "cleanup-agents-kiro-"))
+    await createFile(
+      path.join(root, "slack-researcher.json"),
+      kiroAgentConfigContent(
+        "slack-researcher",
+        await pluginDescription("plugins/compound-engineering/agents/research/ce-slack-researcher.md"),
+      ),
+    )
+    await createFile(
+      path.join(root, "session-historian.json"),
+      kiroAgentConfigContent(
+        "session-historian",
+        await pluginDescription("plugins/compound-engineering/agents/research/ce-session-historian.md"),
+      ),
+    )
+    await createFile(
+      path.join(root, "lint.json"),
+      kiroAgentConfigContent(
+        "lint",
+        "A project-local lint helper unrelated to compound-engineering.",
+      ),
+    )
+
+    const removed = await cleanupStaleAgents(root, ".json")
+
+    expect(removed).toBe(2)
+    expect(await exists(path.join(root, "slack-researcher.json"))).toBe(false)
+    expect(await exists(path.join(root, "session-historian.json"))).toBe(false)
+    expect(await exists(path.join(root, "lint.json"))).toBe(true)
+  })
+
   test("removes agent directories when extension is null", async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), "cleanup-agents-dir-"))
     await createDir(
@@ -302,6 +353,32 @@ describe("cleanupStalePrompts", () => {
 
     expect(removed).toBe(0)
     expect(await exists(path.join(root, "ce-plan.md"))).toBe(true)
+  })
+
+  test("removes pre-rename workflow prompt wrappers with ce:* references", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "cleanup-prompts-legacy-workflow-"))
+    await createFile(
+      path.join(root, "ce-plan.md"),
+      legacyWorkflowPromptContent(
+        "ce:plan",
+        (await pluginDescription("plugins/compound-engineering/skills/ce-plan/SKILL.md"))
+          .replaceAll("ce-", "ce:"),
+      ),
+    )
+    await createFile(
+      path.join(root, "ce-work-beta.md"),
+      legacyWorkflowPromptContent(
+        "ce:work-beta",
+        (await pluginDescription("plugins/compound-engineering/skills/ce-work-beta/SKILL.md"))
+          .replaceAll("ce-", "ce:"),
+      ),
+    )
+
+    const removed = await cleanupStalePrompts(root)
+
+    expect(removed).toBe(2)
+    expect(await exists(path.join(root, "ce-plan.md"))).toBe(false)
+    expect(await exists(path.join(root, "ce-work-beta.md"))).toBe(false)
   })
 })
 

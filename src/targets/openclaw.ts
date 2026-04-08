@@ -10,7 +10,7 @@ export async function writeOpenClawBundle(outputRoot: string, bundle: OpenClawBu
 
   // TODO(cleanup): Remove after v3 transition (circa Q3 2026)
   await cleanupStaleSkillDirs(paths.skillsDir)
-  await cleanupStaleAgents(paths.skillsDir, null) // agents are converted to skill dirs in OpenClaw
+  await cleanupStaleAgents(paths.skillsDir, null, "agent-") // agents are converted to agent-* skill dirs in OpenClaw
 
   // Write openclaw.plugin.json
   await writeJson(paths.manifestPath, bundle.manifest)

@@ -66,7 +66,7 @@ const STALE_SKILL_DIRS = [
 
 /** Old agent names (used as generated skill dirs or flat .md files). */
 const STALE_AGENT_NAMES = [
-  // All 49 agents were renamed from <name> to ce-<name>
+  // Legacy agent names that were renamed from <name> to ce-<name>
   "adversarial-document-reviewer",
   "adversarial-reviewer",
   "agent-native-reviewer",
@@ -110,6 +110,8 @@ const STALE_AGENT_NAMES = [
   "reliability-reviewer",
   "repo-research-analyst",
   "schema-drift-detector",
+  "session-historian",
+  "slack-researcher",
   "scope-guardian-reviewer",
   "security-lens-reviewer",
   "security-reviewer",
@@ -232,6 +234,21 @@ async function readDescription(filePath: string): Promise<string | null> {
   }
 }
 
+function normalizeLegacyWorkflowReferences(value: string): string {
+  return value.replace(/\bce:([a-z0-9-]+)\b/g, "ce-$1")
+}
+
+function descriptionsMatch(
+  actualDescription: string | null | undefined,
+  expectedDescription: string | undefined,
+  aliases: string[] = [],
+): boolean {
+  if (!actualDescription || !expectedDescription) return false
+  const normalizedActual = normalizeLegacyWorkflowReferences(actualDescription)
+  const candidates = [expectedDescription, ...aliases].map(normalizeLegacyWorkflowReferences)
+  return candidates.includes(normalizedActual)
+}
+
 async function loadLegacyFingerprints(): Promise<LegacyFingerprints> {
   if (!legacyFingerprintsPromise) {
     legacyFingerprintsPromise = (async () => {
@@ -290,9 +307,16 @@ function currentSkillNameForLegacyPrompt(fileName: string): string {
 function promptSkillNamesForLegacy(fileName: string): string[] {
   switch (fileName) {
     case "ce-review.md":
-      return ["ce-review", "ce-code-review"]
-    default:
-      return [path.basename(fileName, ".md")]
+      return ["ce-review", "ce-code-review", "ce:review"]
+    default: {
+      const skillName = path.basename(fileName, ".md")
+      const legacyWorkflowName = skillName.startsWith("ce-")
+        ? skillName.replace(/^ce-/, "ce:")
+        : skillName
+      return legacyWorkflowName === skillName
+        ? [skillName]
+        : [skillName, legacyWorkflowName]
+    }
   }
 }
 
@@ -302,22 +326,22 @@ async function isLegacyPluginOwned(
   extension: string | null,
 ): Promise<boolean> {
   if (extension === ".json") {
-    return isLegacyKiroAgentConfig(targetPath)
+    return isLegacyKiroAgentConfig(targetPath, expectedDescription)
   }
 
   if (extension === ".md" && path.basename(path.dirname(targetPath)) === "prompts") {
-    return isLegacyKiroPrompt(targetPath)
+    return isLegacyKiroPrompt(targetPath, expectedDescription)
   }
 
   if (!expectedDescription) return false
   const filePath = extension === null ? path.join(targetPath, "SKILL.md") : targetPath
   const actualDescription = await readDescription(filePath)
-  if (actualDescription === expectedDescription) return true
-
   const aliases = extension === null
     ? LEGACY_SKILL_DESCRIPTION_ALIASES[path.basename(targetPath)] ?? []
     : []
-  return aliases.includes(actualDescription ?? "")
+  if (descriptionsMatch(actualDescription, expectedDescription, aliases)) return true
+
+  return false
 }
 
 async function isLegacyPromptWrapper(
@@ -329,25 +353,41 @@ async function isLegacyPromptWrapper(
   try {
     const raw = await fs.readFile(targetPath, "utf8")
     const { data, body } = parseFrontmatter(raw, targetPath)
-    if (data.description !== expectedDescription) return false
+    if (!descriptionsMatch(
+      typeof data.description === "string" ? data.description : null,
+      expectedDescription,
+    )) return false
 
     return promptSkillNamesForLegacy(path.basename(targetPath)).some((skillName) =>
       body.includes(`Use the $${skillName} skill for this command and follow its instructions.`)
+      || body.includes(`Use the ${skillName} skill for this workflow and follow its instructions exactly.`)
     )
   } catch {
     return false
   }
 }
 
-async function isLegacyKiroAgentConfig(targetPath: string): Promise<boolean> {
+async function isLegacyKiroAgentConfig(
+  targetPath: string,
+  expectedDescription: string | undefined,
+): Promise<boolean> {
+  if (!expectedDescription) return false
+
   try {
     const raw = await fs.readFile(targetPath, "utf8")
     const parsed = JSON.parse(raw) as Record<string, unknown>
     const fileName = path.basename(targetPath, ".json")
     const resources = Array.isArray(parsed.resources) ? parsed.resources : []
     const tools = Array.isArray(parsed.tools) ? parsed.tools : []
+    const description = typeof parsed.description === "string" ? parsed.description : null
+    const welcomeMessage = typeof parsed.welcomeMessage === "string" ? parsed.welcomeMessage : null
 
     return parsed.name === fileName
+      && descriptionsMatch(description, expectedDescription)
+      && descriptionsMatch(
+        welcomeMessage,
+        `Switching to the ${fileName} agent. ${expectedDescription}`,
+      )
       && parsed.prompt === `file://./prompts/${fileName}.md`
       && parsed.includeMcpJson === true
       && tools.length === 1
@@ -359,10 +399,13 @@ async function isLegacyKiroAgentConfig(targetPath: string): Promise<boolean> {
   }
 }
 
-async function isLegacyKiroPrompt(targetPath: string): Promise<boolean> {
+async function isLegacyKiroPrompt(
+  targetPath: string,
+  expectedDescription: string | undefined,
+): Promise<boolean> {
   const agentName = path.basename(targetPath, ".md")
   const siblingConfigPath = path.join(path.dirname(path.dirname(targetPath)), `${agentName}.json`)
-  return isLegacyKiroAgentConfig(siblingConfigPath)
+  return isLegacyKiroAgentConfig(siblingConfigPath, expectedDescription)
 }
 
 async function removeIfExists(targetPath: string): Promise<boolean> {
@@ -403,13 +446,14 @@ export async function cleanupStaleSkillDirs(skillsRoot: string): Promise<number>
 export async function cleanupStaleAgents(
   dir: string,
   extension: string | null,
+  namePrefix = "",
 ): Promise<number> {
   const { agents } = await loadLegacyFingerprints()
   let removed = 0
   for (const name of STALE_AGENT_NAMES) {
     const target = extension
-      ? path.join(dir, `${name}${extension}`)
-      : path.join(dir, name)
+      ? path.join(dir, `${namePrefix}${name}${extension}`)
+      : path.join(dir, `${namePrefix}${name}`)
     if (!(await isLegacyPluginOwned(target, agents.get(name), extension))) continue
     if (await removeIfExists(target)) removed++
   }
