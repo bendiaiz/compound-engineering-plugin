@@ -153,13 +153,15 @@ def handle_claude(obj):
         if isinstance(content, list):
             has_text = False
             for block in content:
-                if block.get("type") == "text" and len(block.get("text", "")) > 20:
-                    if not has_text:
-                        flush_tools()
-                        has_text = True
-                    print(f"[{ts}] [assistant] {block['text'][:800]}")
-                    print("---")
-                    stats["assistant"] += 1
+                if block.get("type") == "text":
+                    text = clean_text(block.get("text", ""))
+                    if len(text) > 20:
+                        if not has_text:
+                            flush_tools()
+                            has_text = True
+                        print(f"[{ts}] [assistant] {text[:800]}")
+                        print("---")
+                        stats["assistant"] += 1
                 elif block.get("type") == "tool_use":
                     name, target = summarize_claude_tool(block)
                     pending_tools.append({"ts": ts, "name": name, "target": target})
