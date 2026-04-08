@@ -339,6 +339,8 @@ If a plan is found, read its **Requirements Trace** (R1, R2, etc.) and **Impleme
 
 Read the diff and file list from Stage 1. The 4 always-on personas and 2 CE always-on agents are automatic. For each cross-cutting and stack-specific conditional persona in the persona catalog included below, decide whether the diff warrants it. This is agent judgment, not keyword matching.
 
+**File-type awareness for conditional selection:** Instruction-prose files (Markdown skill definitions, JSON schemas, config files) are product code but do not benefit from runtime-focused reviewers. The adversarial reviewer's techniques (race conditions, cascade failures, abuse cases) target executable code behavior. For diffs that only change instruction-prose files, skip adversarial unless the prose describes auth, payment, or data-mutation behavior. Count only executable code lines toward line-count thresholds.
+
 **`previous-comments` is PR-only.** Only select this persona when Stage 1 gathered PR metadata (PR number or URL was provided as an argument, or `gh pr view` returned metadata for the current branch). Skip it entirely for standalone branch reviews with no associated PR -- there are no prior comments to check.
 
 Stack-specific personas are additive. A Rails UI change may warrant `kieran-rails` plus `julik-frontend-races`; a TypeScript API diff may warrant `kieran-typescript` plus `api-contract` and `reliability`.
@@ -431,7 +433,8 @@ Each persona sub-agent writes full JSON (all schema fields) to `.context/compoun
       "autofix_class": "gated_auto",
       "owner": "downstream-resolver",
       "requires_verification": true,
-      "pre_existing": false
+      "pre_existing": false,
+      "suggested_fix": "Add current_user.owns?(account) guard before lookup"
     }
   ],
   "residual_risks": [...],
@@ -439,7 +442,7 @@ Each persona sub-agent writes full JSON (all schema fields) to `.context/compoun
 }
 ```
 
-Detail-tier fields (`why_it_matters`, `evidence`, `suggested_fix`) are in the artifact file only. If the file write fails, the compact return still provides everything the merge needs.
+Detail-tier fields (`why_it_matters`, `evidence`) are in the artifact file only. `suggested_fix` is optional in both tiers -- included in compact returns when present so the orchestrator has fix context for auto-apply decisions. If the file write fails, the compact return still provides everything the merge needs.
 
 **CE always-on agents** (agent-native-reviewer, learnings-researcher) are dispatched as standard Agent calls in parallel with the persona agents. Give them the same review context bundle the personas receive: entry mode, any PR metadata gathered in Stage 1, intent summary, review base branch name when known, `BASE:` marker, file list, diff, and `UNTRACKED:` scope notes. Do not invoke them with a generic "review this" prompt. Their output is unstructured and synthesized separately in Stage 6.
 
@@ -447,7 +450,7 @@ Detail-tier fields (`why_it_matters`, `evidence`, `suggested_fix`) are in the ar
 
 ### Stage 5: Merge findings
 
-Convert multiple reviewer compact JSON returns into one deduplicated, confidence-gated finding set. The compact returns contain only merge-tier fields (title, severity, file, line, confidence, autofix_class, owner, requires_verification, pre_existing). Detail-tier fields (why_it_matters, evidence, suggested_fix) are on disk in the per-agent artifact files and are not loaded at this stage.
+Convert multiple reviewer compact JSON returns into one deduplicated, confidence-gated finding set. The compact returns contain merge-tier fields (title, severity, file, line, confidence, autofix_class, owner, requires_verification, pre_existing) plus the optional suggested_fix. Detail-tier fields (why_it_matters, evidence) are on disk in the per-agent artifact files and are not loaded at this stage.
 
 1. **Validate.** Check each compact return for merge-tier required fields: title, severity, file, line, confidence, autofix_class, owner, requires_verification, pre_existing. Drop findings missing any of these. Do not validate against the full schema here -- the full schema (including why_it_matters and evidence) applies to the artifact files on disk, not the compact returns. Record the drop count.
 2. **Confidence gate.** Suppress findings below 0.60 confidence. Exception: P0 findings at 0.50+ confidence survive the gate -- critical-but-uncertain issues must not be silently dropped. Record the suppressed count. This matches the persona instructions and the schema's confidence thresholds.
