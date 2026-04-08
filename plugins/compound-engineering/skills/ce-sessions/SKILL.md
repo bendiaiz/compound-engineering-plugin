@@ -18,8 +18,10 @@ Search your session history.
 
 If no argument is provided, ask what the user wants to know about their session history. Use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). If no question tool is available, ask in plain text and wait for a reply.
 
-Dispatch `compound-engineering:research:session-historian` with the user's question as the task prompt. Include the current working directory, git branch, and which platform this session is running on so the agent can scope its search. Omit the `mode` parameter so the user's configured permission settings apply.
+Dispatch `compound-engineering:research:session-historian` with the user's question as the task prompt. Omit the `mode` parameter so the user's configured permission settings apply. In the dispatch prompt, include:
 
-**Platform scoping:** By default, restrict the search to the current platform's session history only (e.g., Claude Code sessions when running in Claude Code). If the user explicitly asks about other platforms or cross-platform history, pass that through and let the agent widen.
+- The user's question
+- The current working directory and git branch
+- **Platform restriction:** "Search only [current platform] session history. Do not search other platforms unless the user explicitly asked for cross-platform results." — where [current platform] is Claude Code, Codex, or Cursor depending on which harness is running.
 
 Return the agent's response directly.
