@@ -14,10 +14,20 @@ Search your session history.
 /ce:sessions
 ```
 
+## Pre-resolved context
+
+**Repo name (pre-resolved):** !`basename $(git rev-parse --git-common-dir 2>/dev/null | sed 's/\/.git$//')`
+
+**Git branch (pre-resolved):** !`git rev-parse --abbrev-ref HEAD 2>/dev/null`
+
+If the lines above resolved to plain values (a folder name like `my-repo` and a branch name like `feat/my-branch`), they are ready to pass to the agent. If they still contain backtick command strings or are empty, they did not resolve — omit them from the dispatch and let the agent derive them at runtime.
+
 ## Execution
 
 If no argument is provided, ask what the user wants to know about their session history. Use the platform's blocking question tool (`AskUserQuestion` in Claude Code, `request_user_input` in Codex, `ask_user` in Gemini). If no question tool is available, ask in plain text and wait for a reply.
 
-Dispatch `compound-engineering:research:session-historian` with the user's question as the task prompt. Include the current working directory and git branch. Omit the `mode` parameter so the user's configured permission settings apply.
+Dispatch `compound-engineering:research:session-historian` with the user's question as the task prompt. Omit the `mode` parameter so the user's configured permission settings apply. Include in the dispatch prompt:
 
-Return the agent's response directly.
+- The user's question
+- The current working directory
+- The repo name and git branch from pre-resolved context (only if they resolved to plain values — do not pass literal command strings)
