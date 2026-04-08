@@ -151,7 +151,7 @@ From the remaining sessions, select the most relevant (typically 2-5 total acros
 
 For each selected session, run the skeleton extraction script. Pipe the output through `head -200` to cap the skeleton at 200 lines per session. Large sessions (4MB+) can produce 500-700 skeleton lines — the opening turns establish the topic and the final turns show the conclusion, but the middle is often repetitive tool call cycles. 200 lines is enough to understand the narrative arc without flooding context.
 
-If the truncated skeleton doesn't cover the session's conclusion, extract the tail separately: `cat <file> | python3 -c '<script>' | tail -50`.
+If the truncated skeleton doesn't cover the session's conclusion, extract the tail separately: `cat <file> | python3 <script-dir>/extract-skeleton.py | tail -50`.
 
 ### Step 5: Extract error signals (selective)
 

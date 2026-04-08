@@ -16,7 +16,7 @@ Search your session history.
 
 ## Pre-resolved context
 
-**Repo name (pre-resolved):** !`basename $(git rev-parse --git-common-dir 2>/dev/null | sed 's/\/.git$//')`
+**Repo name (pre-resolved):** !`basename "$(git rev-parse --show-toplevel 2>/dev/null)"`
 
 **Git branch (pre-resolved):** !`git rev-parse --abbrev-ref HEAD 2>/dev/null`
 
