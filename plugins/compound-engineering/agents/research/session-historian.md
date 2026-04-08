@@ -114,7 +114,7 @@ Python scripts output a `_meta` line at the end with `files_processed` and `pars
 
 Determine the scan window from the Time Range table above, then discover and extract metadata.
 
-**Derive the repo name** from `basename "$(git rev-parse --show-toplevel)"` (returns the repo's root directory name even from a worktree — e.g., `/Users/x/Code/my-repo` → repo name is `my-repo`). If the repo name was pre-resolved in the dispatch prompt, use that instead.
+**Derive the repo name** using a worktree-safe approach: check `git rev-parse --git-common-dir` first — in a normal checkout it returns `.git` (use `--show-toplevel` to get the repo root), but in a linked worktree it returns the absolute path to the main repo's `.git` directory (use `dirname` on that path to get the repo root). In either case, `basename` the result to get the repo name. Example: `common=$(git rev-parse --git-common-dir 2>/dev/null); if [ "$common" = ".git" ]; then basename "$(git rev-parse --show-toplevel 2>/dev/null)"; else basename "$(dirname "$common")"; fi`. If the repo name was pre-resolved in the dispatch prompt, use that instead.
 
 **Discover session files using the discovery script.** `session-history-scripts/discover-sessions.sh` handles all platform-specific directory structures, mtime filtering, and zsh glob safety. Run it by path (do not read it into context):
 
