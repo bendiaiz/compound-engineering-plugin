@@ -115,18 +115,20 @@ Determine the scan window from the Time Range table above, then discover and ext
 
 **Run metadata extraction in a single invocation across all sources.** Each bash call replays the full conversation context, so fewer calls = fewer tokens. Construct one command that covers all applicable platforms:
 
-- **Claude Code (project-scoped):** `~/.claude/projects/<encoded-cwd>/*.jsonl` where `<encoded-cwd>` replaces `/` with `-` in the CWD. For repos with many sessions, pre-filter to the 20 most recent files: `ls -t ~/.claude/projects/<encoded-cwd>/*.jsonl | head -20`.
-- **Claude Code (all projects):** `~/.claude/projects/*/*.jsonl`
-- **Codex:** `~/.codex/sessions/YYYY/MM/DD/*.jsonl` for date directories within the scan window. Also check `~/.agents/sessions/`. When project-scoped, filter results to sessions whose `cwd` matches the current working directory.
-- **Cursor:** `~/.cursor/projects/<encoded-cwd>/agent-transcripts/*/*.jsonl`. Same CWD-encoding as Claude Code.
+**Pre-filter by file modification time.** A session file cannot contain data newer than its own modification time. Use `find -mtime` to skip files older than the scan window before passing them to the metadata script. This eliminates the majority of files without any JSONL parsing.
 
-Combine these globs into a single invocation of `extract-metadata.py`. The script handles mixed platforms via auto-detection:
+- **Claude Code (project-scoped):** `find ~/.claude/projects/<encoded-cwd>/ -maxdepth 1 -name "*.jsonl" -mtime -<days>` where `<encoded-cwd>` replaces `/` with `-` in the CWD, and `<days>` matches the scan window.
+- **Claude Code (all projects):** `find ~/.claude/projects/ -name "*.jsonl" -mtime -<days>`
+- **Codex:** `~/.codex/sessions/YYYY/MM/DD/*.jsonl` for date directories within the scan window. Also check `~/.agents/sessions/`. When project-scoped, filter metadata results to sessions whose `cwd` matches the current working directory.
+- **Cursor:** `find ~/.cursor/projects/<encoded-cwd>/agent-transcripts/ -name "*.jsonl" -mtime -<days>`. Same CWD-encoding as Claude Code.
+
+Combine the results into a single invocation of `extract-metadata.py`:
 
 ```bash
-python3 <script-path> $(ls -t ~/.claude/projects/<encoded-cwd>/*.jsonl | head -20) ~/.codex/sessions/2026/04/0[3-7]/*.jsonl ~/.cursor/projects/<encoded-cwd>/agent-transcripts/*/*.jsonl
+python3 <script-path> $(find ~/.claude/projects/<encoded-cwd>/ -maxdepth 1 -name "*.jsonl" -mtime -7) $(find ~/.cursor/projects/<encoded-cwd>/agent-transcripts/ -name "*.jsonl" -mtime -7 2>/dev/null) ~/.codex/sessions/2026/04/0[1-7]/*.jsonl
 ```
 
-If a glob expands to nothing (source doesn't exist or has no files), that's fine — the script processes whatever files it receives. Filter the output by timestamp against the scan window.
+If a source has no matching files, that's fine — the script processes whatever files it receives.
 
 If no source produces results, return: "No session history found within the requested time range." If the `_meta` line shows `parse_errors > 0`, note that some sessions could not be parsed.
 
