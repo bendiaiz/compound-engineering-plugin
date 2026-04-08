@@ -116,7 +116,7 @@ describe("extract-metadata", () => {
     expect(sessions[0].cwd).toContain("my-repo")
   })
 
-  test("reports _meta with parse_errors for empty files", async () => {
+  test("reports clean zero-file result for empty stdin", async () => {
     const { stdout, exitCode } = await runScript(
       "extract-metadata.py",
       [],
@@ -125,7 +125,8 @@ describe("extract-metadata", () => {
     expect(exitCode).toBe(0)
     const lines = parseJsonLines(stdout)
     const meta = lines.find((l) => l._meta)
-    expect(meta.parse_errors).toBe(1)
+    expect(meta.files_processed).toBe(0)
+    expect(meta.parse_errors).toBe(0)
   })
 })
 

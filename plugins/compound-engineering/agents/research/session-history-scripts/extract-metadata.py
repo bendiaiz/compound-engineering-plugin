@@ -168,9 +168,20 @@ if files:
         meta["filtered_by_cwd"] = filtered
     print(json.dumps(meta))
 else:
-    # Single-file stdin mode (backward compatible)
-    lines = list(sys.stdin)
-    result = extract_from_lines(lines)
-    if result:
-        print(json.dumps(result))
-    print(json.dumps({"_meta": True, "files_processed": 1, "parse_errors": 0 if result else 1}))
+    # No file arguments: either single-file stdin mode or empty xargs invocation.
+    # When xargs runs us with no input (e.g., discover found no files), stdin is
+    # empty or a TTY — emit a clean zero-file result instead of a false parse error.
+    if sys.stdin.isatty():
+        lines = []
+    else:
+        lines = list(sys.stdin)
+
+    if not lines:
+        # No input at all — zero-file result (clean exit for empty pipelines)
+        print(json.dumps({"_meta": True, "files_processed": 0, "parse_errors": 0}))
+    else:
+        # Genuine single-file stdin mode (backward compatible)
+        result = extract_from_lines(lines)
+        if result:
+            print(json.dumps(result))
+        print(json.dumps({"_meta": True, "files_processed": 1, "parse_errors": 0 if result else 1}))
