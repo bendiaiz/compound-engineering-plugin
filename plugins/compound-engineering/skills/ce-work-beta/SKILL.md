@@ -13,7 +13,7 @@ Execute work efficiently while maintaining quality and finishing features.
 
 This command takes a work document (plan, specification, or todo file) or a bare prompt describing the work, and executes it systematically. The focus is on **shipping complete features** by understanding requirements quickly, following existing patterns, and maintaining quality throughout.
 
-**Beta rollout note:** Invoke `ce:work-beta` manually when you want to trial Codex delegation. During the beta period, planning and workflow handoffs remain pointed at stable `ce:work` to avoid dual-path orchestration complexity.
+**Beta rollout note:** Invoke `ce-work-beta` manually when you want to trial Codex delegation. During the beta period, planning and workflow handoffs remain pointed at stable `ce-work` to avoid dual-path orchestration complexity.
 
 ## Input Document
 
