@@ -54,7 +54,11 @@ If `inside_sandbox` is true, delegation would recurse or fail.
 **2. Availability Check**
 
 ```bash
-command -v codex >/dev/null 2>&1 && echo "CODEX_AVAILABLE" || echo "CODEX_NOT_FOUND"
+if command -v codex > /dev/null 2>&1; then
+  echo "CODEX_AVAILABLE"
+else
+  echo "CODEX_NOT_FOUND"
+fi
 ```
 
 If the output is `CODEX_NOT_FOUND`: emit "Codex CLI not found (install via `npm install -g @openai/codex` or `brew install codex`) -- using standard mode." and set `delegation_active` to false.
@@ -251,7 +255,7 @@ If the output is "Waiting for Codex...", issue the same polling command again as
 **Polling failure termination:** Stop polling and classify as CLI failure (row 1 in the result classification table) when either condition is met:
 
 - The background process notification from Step A arrives with a **non-zero exit code** -- the `codex exec` process has already exited unsuccessfully, so no result file will ever appear.
-- **30 polling rounds** elapse (~5 minutes) without the result file appearing and without a background process notification -- treat this as a hung or silently-failed process.
+- **5 polling rounds** elapse (~5 minutes) without the result file appearing and without a background process notification -- treat this as a hung or silently-failed process.
 
 In both cases, do not issue further polling calls. Proceed directly to result classification with "CLI failure" and execute the rollback and fallback-to-standard-mode actions described there.
 

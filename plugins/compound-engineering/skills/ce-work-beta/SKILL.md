@@ -52,6 +52,7 @@ If it shows an unresolved command string, read `.compound-engineering/config.loc
 If any setting has an unrecognized value, fall through to the hard default for that setting.
 
 Config keys:
+- `work_delegate` -- `codex` or default `false`
 - `work_delegate_consent` -- `true` or default `false`
 - `work_delegate_sandbox` -- `yolo` (default) or `full-auto`
 - `work_delegate_decision` -- `auto` (default) or `ask`
