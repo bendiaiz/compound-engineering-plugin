@@ -162,8 +162,8 @@ describe("ce:work-beta codex delegation contract", () => {
     const content = await readRepoFile("plugins/compound-engineering/skills/ce-work-beta/SKILL.md")
 
     expect(content).toContain("disable-model-invocation: true")
-    expect(content).toContain("Invoke `ce:work-beta` manually")
-    expect(content).toContain("planning and workflow handoffs remain pointed at stable `ce:work`")
+    expect(content).toContain("Invoke `ce-work-beta` manually")
+    expect(content).toContain("planning and workflow handoffs remain pointed at stable `ce-work`")
   })
 
   test("SKILL.md has delegation routing stub pointing to reference", async () => {
@@ -253,7 +253,7 @@ describe("ce:work-beta codex delegation contract", () => {
     const content = await readRepoFile("plugins/compound-engineering/skills/ce-work-beta/SKILL.md")
 
     expect(content).toContain("**Frontend Design Guidance**")
-    expect(content).toContain("`frontend-design` skill")
+    expect(content).toContain("`ce-frontend-design` skill")
   })
 })
 
