@@ -150,7 +150,7 @@ describe("capture-evidence.sh", () => {
 
     beforeAll(async () => {
       // Check for ffmpeg
-      const proc = Bun.spawn(["command", "-v", "ffmpeg"], {
+      const proc = Bun.spawn(["which", "ffmpeg"], {
         stdout: "pipe",
         stderr: "pipe",
       })

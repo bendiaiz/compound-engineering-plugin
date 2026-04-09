@@ -112,7 +112,7 @@ cmd_stitch() {
     echo "duration $duration"
   done > "$concat_file"
   # Concat demuxer requires last file repeated without duration
-  echo "file '$(basename "${normalized[-1]}")'" >> "$concat_file"
+  echo "file '$(basename "${normalized[${#normalized[@]}-1]}")'" >> "$concat_file"
 
   # Step 4: Two-pass palette generation for quality
   local palette="$tmpdir/palette.png"
@@ -155,7 +155,7 @@ cmd_stitch() {
       for ((j=step; j < ${#frames[@]} - 1; j+=step)); do
         reduced_frames+=("${frames[$j]}")
       done
-      reduced_frames+=("${frames[-1]}")
+      reduced_frames+=("${frames[${#frames[@]}-1]}")
 
       if [[ ${#reduced_frames[@]} -lt ${#frames[@]} ]]; then
         echo "  Reduced from ${#frames[@]} to ${#reduced_frames[@]} frames"
