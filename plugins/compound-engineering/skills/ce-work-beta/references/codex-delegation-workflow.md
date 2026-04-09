@@ -4,7 +4,7 @@ When `delegation_active` is true, code implementation is delegated to the Codex 
 
 ## Delegation Decision
 
-If `work_delegate_decision` is `ask`, present the recommendation before proceeding.
+If `work_delegate_decision` is `ask`, present the recommendation and wait for the user's choice before proceeding.
 
 **When recommending Codex delegation:**
 
@@ -23,6 +23,8 @@ If `work_delegate_decision` is `ask`, present the recommendation before proceedi
 > "Codex delegation active, but these are small changes where the cost of delegating outweighs having Claude Code do them."
 > 1. Execute with Claude Code *(recommended)*
 > 2. Delegate to Codex anyway
+
+If the user chooses the delegation option, proceed to Pre-Delegation Checks below. If the user chooses the Claude Code option, set `delegation_active` to false and return to standard execution in the parent skill.
 
 If `work_delegate_decision` is `auto` (the default), state the execution plan in one line and proceed without waiting: "Codex delegation active. Delegating [N] units in [X] batch(es)." or "Codex delegation active. All units are trivial -- executing with Claude Code."
 
@@ -249,12 +251,12 @@ echo "Waiting for Codex..."
 
 If the output is "Waiting for Codex...", issue the same polling command again as another separate Bash call. Repeat until the output is "DONE", then read the result file and proceed to classification.
 
-**Polling failure termination:** Stop polling and classify as CLI failure (row 1 in the result classification table) when either condition is met:
+**Polling termination conditions:** Stop polling when any of these conditions is met:
 
-- The background process notification from Step A arrives with a **non-zero exit code** -- the `codex exec` process has already exited unsuccessfully, so no result file will ever appear.
-- **5 polling rounds** elapse (~5 minutes) without the result file appearing and without a background process notification -- treat this as a hung or silently-failed process.
-
-In both cases, do not issue further polling calls. Proceed directly to result classification with "CLI failure" and execute the rollback and fallback-to-standard-mode actions described there.
+- **Result file appears** (output is "DONE") -- proceed to result classification normally.
+- **Background process exits with non-zero code** -- classify as CLI failure (row 1). Rollback and fall back to standard mode.
+- **Background process exits with zero code but result file is absent** -- classify as task failure (row 2: exit 0, result JSON missing). Rollback and increment `consecutive_failures`.
+- **5 polling rounds** elapse (~5 minutes) without the result file appearing and without a background process notification -- treat as a hung process. Classify as CLI failure (row 1). Rollback and fall back to standard mode.
 
 **Result classification:** Codex is responsible for running verification internally and fixing failures before reporting -- the orchestrator does not re-run verification independently.
 
