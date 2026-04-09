@@ -15,7 +15,9 @@ deps=(
   "agent-browser|recommended|npm install -g agent-browser && agent-browser install|https://github.com/vercel-labs/agent-browser"
   "gh|recommended|brew install gh|https://cli.github.com"
   "jq|recommended|brew install jq|https://jqlang.github.io/jq/"
-  "rtk|optional|brew install rtk|https://github.com/rtk-ai/rtk"
+  "vhs|optional|brew install vhs|https://github.com/charmbracelet/vhs"
+  "silicon|optional|brew install silicon|https://github.com/Aloxaf/silicon"
+  "ffmpeg|optional|brew install ffmpeg|https://ffmpeg.org/download.html"
 )
 
 # =====================================================

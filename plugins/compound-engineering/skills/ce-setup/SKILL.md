@@ -109,7 +109,9 @@ Recommended:
   [x] jq - JSON processor
 
 Optional:
-  [ ] rtk - Token optimization CLI (60-90% savings)
+  [ ] vhs (charmbracelet/vhs) - Create GIFs from CLI output
+  [ ] silicon (Aloxaf/silicon) - Generate code screenshots
+  [ ] ffmpeg - Video processing for feature demos
 ```
 
 Only show dependencies that are actually missing. Omit installed ones.
