@@ -26,7 +26,7 @@ If `work_delegate_decision` is `ask`, present the recommendation and wait for th
 
 If the user chooses the delegation option, proceed to Pre-Delegation Checks below. If the user chooses the Claude Code option, set `delegation_active` to false and return to standard execution in the parent skill.
 
-If `work_delegate_decision` is `auto` (the default), state the execution plan in one line and proceed without waiting: "Codex delegation active. Delegating [N] units in [X] batch(es)." or "Codex delegation active. All units are trivial -- executing with Claude Code."
+If `work_delegate_decision` is `auto` (the default), state the execution plan in one line and proceed without waiting: "Codex delegation active. Delegating [N] units in [X] batch(es)." If all units are trivial, set `delegation_active` to false and proceed: "Codex delegation active. All units are trivial -- executing with Claude Code."
 
 ## Pre-Delegation Checks
 
