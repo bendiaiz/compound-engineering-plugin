@@ -336,8 +336,8 @@ Fill in at PR creation time using the harness lookup (for logo and color) and mo
 - `GPT_5.4_(High)`
 - `Sonnet_4.6_(200K)`
 - `Opus_4.6` (if context and thinking level are unknown)
-- `Gemini 3.1 Pro`
-- `Gemini 3 Flash`
+- `Gemini_3.1_Pro`
+- `Gemini_3_Flash`
 
 ### Step 7: Create or update the PR
 
