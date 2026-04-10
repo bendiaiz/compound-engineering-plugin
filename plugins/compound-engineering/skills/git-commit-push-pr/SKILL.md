@@ -289,7 +289,7 @@ Use this to select the right description depth:
 
 If the user has documented writing style preferences (in CLAUDE.md, project instructions, or prior feedback), follow those. Otherwise, apply these defaults:
 
-- Use active voice throughout. No em dashes.
+- Use active voice throughout. No em dashes or double-hyphen (`--`) substitutes. Use periods, commas, colons, or parentheses instead.
 - Vary sentence length deliberately -- mix short punchy sentences with longer ones. Never write three sentences of similar length in a row.
 - Do not make a claim and then immediately explain it in the next sentence. Trust the reader.
 - Write in plain English. If there's a simpler word, that's preferable. Never use business jargon when a common word will do. Technical jargon is fine when it's the clearest term for a developer audience.
