@@ -426,7 +426,7 @@ def cmd_screenshot_reel(args):
                 "--theme", args.theme,
                 "-l", args.lang,
                 "--pad-horiz", "20",
-                "--pad-vert", "20",
+                "--pad-vert", "40",
                 "--no-line-number",
                 "--no-round-corner",
                 "--background", args.background,
