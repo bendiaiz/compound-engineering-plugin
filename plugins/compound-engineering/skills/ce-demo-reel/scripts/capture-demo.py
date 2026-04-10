@@ -75,7 +75,8 @@ def cmd_preflight(_args):
 ELECTRON_DEPS = {"electron", "electron-builder", "electron-forge", "electron-vite", "electron-packager"}
 WEB_NODE_DEPS = {"react", "vue", "svelte", "astro", "next", "nuxt", "@angular/core", "solid-js", "@remix-run/react", "gatsby"}
 WEB_RUBY_DEPS = {"rails", "sinatra", "hanami", "roda"}
-WEB_GO_DEPS = {"gin", "echo", "fiber", "chi", "gorilla/mux"}
+WEB_GO_DEPS = {"github.com/gin-gonic/gin", "github.com/labstack/echo", "github.com/gofiber/fiber",
+               "github.com/go-chi/chi", "github.com/gorilla/mux"}
 WEB_PYTHON_DEPS = {"flask", "django", "fastapi", "starlette", "tornado"}
 WEB_RUST_DEPS = {"actix-web", "axum", "rocket", "warp"}
 CLI_RUBY_DEPS = {"thor", "gli", "dry-cli"}
