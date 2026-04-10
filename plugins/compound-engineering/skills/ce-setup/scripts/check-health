@@ -13,11 +13,11 @@ set -o pipefail
 
 deps=(
   "agent-browser|recommended|CI=true npm install -g agent-browser --no-audit --no-fund --loglevel=error && agent-browser install && npx skills add https://github.com/vercel-labs/agent-browser --skill agent-browser -g -y|https://github.com/vercel-labs/agent-browser"
-  "gh|recommended|NONINTERACTIVE=1 brew install gh|https://cli.github.com"
-  "jq|recommended|NONINTERACTIVE=1 brew install jq|https://jqlang.github.io/jq/"
-  "vhs|optional|NONINTERACTIVE=1 brew install vhs|https://github.com/charmbracelet/vhs"
-  "silicon|optional|NONINTERACTIVE=1 brew install silicon|https://github.com/Aloxaf/silicon"
-  "ffmpeg|optional|NONINTERACTIVE=1 brew install ffmpeg|https://ffmpeg.org/download.html"
+  "gh|recommended|NONINTERACTIVE=1 HOMEBREW_NO_AUTO_UPDATE=1 brew install -q gh|https://cli.github.com"
+  "jq|recommended|NONINTERACTIVE=1 HOMEBREW_NO_AUTO_UPDATE=1 brew install -q jq|https://jqlang.github.io/jq/"
+  "vhs|recommended|NONINTERACTIVE=1 HOMEBREW_NO_AUTO_UPDATE=1 brew install -q vhs|https://github.com/charmbracelet/vhs"
+  "silicon|recommended|NONINTERACTIVE=1 HOMEBREW_NO_AUTO_UPDATE=1 brew install -q silicon|https://github.com/Aloxaf/silicon"
+  "ffmpeg|recommended|NONINTERACTIVE=1 HOMEBREW_NO_AUTO_UPDATE=1 brew install -q ffmpeg|https://ffmpeg.org/download.html"
 )
 
 # =====================================================
@@ -103,9 +103,6 @@ fi
 # =====================================================
 
 echo ""
-echo " Compound Engineering Setup"
-echo " ────────────────────────────────────────"
-
 if [ -n "$plugin_version" ]; then
   ok "Plugin version v${plugin_version}"
 fi
@@ -118,19 +115,9 @@ for result in "${results[@]}"; do
   IFS='|' read -r name tier status install_cmd url <<< "$result"
   if [ "$status" = "ok" ]; then
     ok "$name"
-  elif [ "$tier" = "recommended" ]; then
-    fail "$name"
-    issues=$((issues + 1))
-    case "$install_cmd" in
-      brew\ *)
-        if [ "$has_brew" = "yes" ]; then detail "$install_cmd"
-        else detail "$url"; fi ;;
-      *)
-        detail "$install_cmd"
-        detail "$url" ;;
-    esac
   else
-    skip "$name  (optional)"
+    warn "$name"
+    issues=$((issues + 1))
     case "$install_cmd" in
       brew\ *)
         if [ "$has_brew" = "yes" ]; then detail "$install_cmd"
@@ -183,8 +170,6 @@ fi
 # --- Bottom line ---
 
 echo ""
-echo " ────────────────────────────────────────"
-
 if [ "$issues" -eq 0 ]; then
   echo " ✅  All clear  ${cli_ok}/${cli_total} tools"
 else

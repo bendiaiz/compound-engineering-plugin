@@ -22,6 +22,8 @@ If a version is found, pass it to the check script via `--version`. Otherwise om
 
 ### Step 2: Run the Health Check Script
 
+Before running the script, display: "Compound Engineering -- checking your environment..."
+
 Run the bundled check script. Do not perform manual dependency checks -- the script handles all CLI tools, repo-local CE file checks, and `.gitignore` guidance in one pass.
 
 ```bash
@@ -46,17 +48,19 @@ If the line above resolved to `CLAUDE_CODE`, this is a Claude Code session and `
 
 After the diagnostic report, check whether:
 
-- any dependencies are missing (reported as red in the script output)
+- any dependencies are missing (reported as yellow in the script output)
 - `compound-engineering.local.md` is present and needs cleanup
 - `.compound-engineering/config.local.yaml` does not exist or is not safely gitignored
 - `.compound-engineering/config.local.example.yaml` is missing or outdated
 
-If everything is installed, no repo-local cleanup is needed, and `.compound-engineering/config.local.yaml` already exists and is gitignored, display:
+If everything is installed, no repo-local cleanup is needed, and `.compound-engineering/config.local.yaml` already exists and is gitignored, display the tool list and completion message. Parse the tool names from the script output and list each with a green circle:
 
 ```
- ✅ Setup complete
+ ✅ Compound Engineering setup complete
 
-    All tools installed, config in place.
+    Tools: 🟢 agent-browser  🟢 gh  🟢 jq  🟢 vhs  🟢 silicon  🟢 ffmpeg
+    Config: ✅
+
     Run /ce-setup anytime to re-check.
 ```
 
@@ -99,21 +103,19 @@ If the local config already exists, check whether it is safely gitignored. If no
 
 ### Step 6: Offer Installation
 
-Present the missing dependencies grouped by tier using a multiSelect question. Pre-select recommended items. Use the install commands and URLs from the script's diagnostic output.
+Present the missing dependencies using a multiSelect question with all items pre-selected. Use the install commands and URLs from the script's diagnostic output.
 
 ```
 The following tools are missing. Select which to install:
-(Recommended items are pre-selected)
+(All items are pre-selected)
 
 Recommended:
   [x] agent-browser - Browser automation for testing and screenshots
   [x] gh - GitHub CLI for issues and PRs
   [x] jq - JSON processor
-
-Optional:
-  [ ] vhs (charmbracelet/vhs) - Create GIFs from CLI output
-  [ ] silicon (Aloxaf/silicon) - Generate code screenshots
-  [ ] ffmpeg - Video processing for feature demos
+  [x] vhs (charmbracelet/vhs) - Create GIFs from CLI output
+  [x] silicon (Aloxaf/silicon) - Generate code screenshots
+  [x] ffmpeg - Video processing for feature demos
 ```
 
 Only show dependencies that are actually missing. Omit installed ones.
@@ -143,7 +145,7 @@ For each selected dependency, in order:
 Display a brief summary:
 
 ```
- ✅ Setup complete
+ ✅ Compound Engineering setup complete
 
     Installed: agent-browser, gh, jq
     Skipped:   rtk
