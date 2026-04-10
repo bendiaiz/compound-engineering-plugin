@@ -358,15 +358,17 @@ def _stitch_frames(output, frames, duration=3.0):
 
         # Two-pass palette generation
         palette = os.path.join(tmpdir, "palette.png")
-        run_cmd([
+        result = run_cmd([
             "ffmpeg", "-y", "-v", "error",
             "-f", "concat", "-safe", "0", "-i", concat_file,
             "-vf", "palettegen=stats_mode=diff",
             palette,
         ])
+        if result.returncode != 0:
+            die("ffmpeg palette generation failed")
 
         # Generate GIF with palette
-        run_cmd([
+        result = run_cmd([
             "ffmpeg", "-y", "-v", "error",
             "-f", "concat", "-safe", "0", "-i", concat_file,
             "-i", palette,
@@ -374,9 +376,11 @@ def _stitch_frames(output, frames, duration=3.0):
             "-loop", "0",
             output,
         ])
+        if result.returncode != 0:
+            die("ffmpeg GIF encoding failed")
 
         if not Path(output).exists():
-            die("GIF creation failed — no output file")
+            die("GIF creation failed: no output file")
 
         size = Path(output).stat().st_size
         size_mb = size / (1024 * 1024)
