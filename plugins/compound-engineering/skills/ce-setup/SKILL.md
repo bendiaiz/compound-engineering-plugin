@@ -53,9 +53,10 @@ After the diagnostic report, check whether:
 If everything is installed, no repo-local cleanup is needed, and `.compound-engineering/config.local.yaml` already exists and is gitignored, display:
 
 ```
-Everything looks good -- all tools installed, config in place.
-Run /ce-setup anytime to re-check dependencies.
-Setup complete.
+ ✅ Setup complete
+
+    All tools installed, config in place.
+    Run /ce-setup anytime to re-check.
 ```
 
 If this is a Claude Code session, append to the message: "Run /ce-update to grab the latest plugin version."
@@ -142,11 +143,12 @@ For each selected dependency, in order:
 Display a brief summary:
 
 ```
-Setup complete.
-  Installed: agent-browser, gh, jq
-  Skipped:   rtk
+ ✅ Setup complete
 
-Run /ce-setup anytime to re-check dependencies.
+    Installed: agent-browser, gh, jq
+    Skipped:   rtk
+
+    Run /ce-setup anytime to re-check.
 ```
 
 If this is a Claude Code session (per platform detection in Step 3), append: "Run /ce-update to grab the latest plugin version."
