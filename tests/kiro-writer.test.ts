@@ -37,29 +37,31 @@ describe("writeKiroBundle", () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "kiro-cleanup-"))
     const kiroRoot = path.join(tempRoot, ".kiro")
     await fs.mkdir(path.join(kiroRoot, "agents", "prompts"), { recursive: true })
-    const lintDescription = await pluginDescription("plugins/compound-engineering/agents/workflow/ce-lint.md")
+    const sessionHistorianDescription = await pluginDescription(
+      "plugins/compound-engineering/agents/research/ce-session-historian.md",
+    )
 
     await fs.writeFile(
-      path.join(kiroRoot, "agents", "lint.json"),
+      path.join(kiroRoot, "agents", "session-historian.json"),
       JSON.stringify({
-        name: "lint",
-        description: lintDescription,
-        prompt: "file://./prompts/lint.md",
+        name: "session-historian",
+        description: sessionHistorianDescription,
+        prompt: "file://./prompts/session-historian.md",
         tools: ["*"],
         resources: ["file://.kiro/steering/**/*.md", "skill://.kiro/skills/**/SKILL.md"],
         includeMcpJson: true,
-        welcomeMessage: `Switching to the lint agent. ${lintDescription}`,
+        welcomeMessage: `Switching to the session-historian agent. ${sessionHistorianDescription}`,
       }),
     )
     await fs.writeFile(
-      path.join(kiroRoot, "agents", "prompts", "lint.md"),
-      "Legacy lint prompt\n",
+      path.join(kiroRoot, "agents", "prompts", "session-historian.md"),
+      "Legacy session-historian prompt\n",
     )
 
     await writeKiroBundle(kiroRoot, emptyBundle)
 
-    expect(await exists(path.join(kiroRoot, "agents", "lint.json"))).toBe(false)
-    expect(await exists(path.join(kiroRoot, "agents", "prompts", "lint.md"))).toBe(false)
+    expect(await exists(path.join(kiroRoot, "agents", "session-historian.json"))).toBe(false)
+    expect(await exists(path.join(kiroRoot, "agents", "prompts", "session-historian.md"))).toBe(false)
   })
 
   test("writes agents, skills, steering, and mcp.json", async () => {
