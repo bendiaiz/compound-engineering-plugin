@@ -2,6 +2,10 @@
 
 AI-powered development tools that get smarter with every use. Make each unit of engineering work easier than the last.
 
+## Getting Started
+
+After installing, run `/ce-setup` in any project. It diagnoses your environment, installs missing tools, and bootstraps project config in one interactive flow.
+
 ## Components
 
 | Component | Count |
@@ -53,6 +57,7 @@ The primary entry points for engineering work, invoked as slash commands:
 | `/test-browser` | Run browser tests on PR-affected pages |
 | `/test-xcode` | Build and test iOS apps on simulator using XcodeBuildMCP |
 | `/onboarding` | Generate `ONBOARDING.md` to help new contributors understand the codebase |
+| `/ce-setup` | Diagnose environment, install missing tools, and bootstrap project config |
 | `/ce-update` | Check compound-engineering plugin version and fix stale cache (Claude Code only) |
 | `/todo-resolve` | Resolve todos in parallel |
 | `/todo-triage` | Triage and prioritize pending todos |
@@ -73,7 +78,6 @@ The primary entry points for engineering work, invoked as slash commands:
 |-------|-------------|
 | `claude-permissions-optimizer` | Optimize Claude Code permissions from session history |
 | `document-review` | Review documents using parallel persona agents for role-specific feedback |
-| `ce-setup` | Diagnose and configure environment: checks CLI deps, MCP servers, env vars, plugin version, and repo-local config; offers guided installation for missing tools |
 
 ### Content & Collaboration
 
@@ -182,6 +186,8 @@ Agents are specialized subagents invoked by skills — you typically don't call 
 ```bash
 claude /plugin install compound-engineering
 ```
+
+Then run `/ce-setup` to check your environment and install recommended tools.
 
 ## Version History
 
