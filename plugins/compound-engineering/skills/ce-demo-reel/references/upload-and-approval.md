@@ -39,15 +39,17 @@ Set evidence to null and proceed. The preview link expires on its own.
 
 ## Step 3: Promote to Permanent Hosting
 
-After the user approves, promote the preview URL to permanent catbox hosting:
+After the user approves, upload to permanent catbox hosting. The command accepts either the preview URL (preferred) or the local file path (fallback):
 
 ```bash
-python3 scripts/capture-demo.py upload [PREVIEW_URL]
+python3 scripts/capture-demo.py upload [PREVIEW_URL or ARTIFACT_PATH]
 ```
 
-This uses catbox's `urlupload` to copy directly from litterbox without re-uploading the local file. The last line of output is the permanent URL (e.g., `https://files.catbox.moe/abc123.gif`). Use this URL in the output, not the preview URL.
+If Step 1 produced a preview URL, pass it here -- catbox copies directly from litterbox without re-uploading. If Step 1 fell back to local review (no preview URL), pass the local artifact path instead.
 
-For multiple files, promote each preview URL separately.
+The last line of output is the permanent URL (e.g., `https://files.catbox.moe/abc123.gif`). Use this URL in the output, not the preview URL.
+
+For multiple files, promote each separately.
 
 ## Step 4: Return Output
 
