@@ -56,27 +56,31 @@ Interactive scaffolding (confirmation prompts, compare-and-confirm, apply step) 
 All three input forms (bare number, full URL, `owner/repo#number` shorthand) work identically with `gh pr view` — pass the caller's value through verbatim as `<pr-ref>`:
 
 ```bash
-gh pr view <pr-ref> --json number,state,title,body,baseRefName,headRefName,headRepositoryOwner,headRepository,baseRepository,commits,url
+gh pr view <pr-ref> --json number,state,title,body,baseRefName,headRefName,headRepository,headRepositoryOwner,isCrossRepository,commits,url
 ```
 
-Extract the PR number, base-repo owner, and base-repo name from the JSON output. The PR number is needed for the `refs/pull/<N>/head` fetch; the base-repo identity determines whether the target repo matches the current working directory.
+Note the available JSON fields: `gh pr view --json` exposes `headRepository` (the PR source repo) and `isCrossRepository` (whether the PR source differs from the base). It does NOT expose a `baseRepository` field — the base repo is the repo queried by `gh pr view` itself, inferred from the URL or current working directory. Extract the PR number (for the `refs/pull/<N>/head` fetch) and use `isCrossRepository` to decide routing.
 
 If the returned `state` is not `OPEN`, report "PR <number> is <state> (not open); cannot regenerate description" and exit gracefully without output. Callers expecting `{title, body}` must handle this empty case.
 
-**Determine whether the PR lives in the current repo** by comparing the PR's base-repo (owner + name) against the local clone's remote URL. Use `git remote get-url origin` and check whether the URL points to `<baseRepositoryOwner>/<baseRepository>`. Two cases:
+**Determine whether the PR lives in the current working directory's repo.** Two independent signals:
+- The input form: a bare number or an `owner/repo#NN` shorthand implicitly targets the current repo; a full URL may target any repo.
+- The URL's repo identity: parse the URL's `<owner>/<repo>` path segments and compare against `git remote get-url origin` (strip `.git` suffix, handle `git@github.com:owner/repo` vs `https://github.com/owner/repo` forms).
+
+If the URL-derived repo matches the local `origin` remote's repo, route to Case A. Otherwise route to Case B. For bare-number and shorthand inputs that resolve against the current directory, always Case A. The two cases:
 
 **Case A — PR is in the current repo** (common case when the user is working inside the target repo):
 
 Resolve the base remote (the one whose URL points to the PR's base repository; fall back to `origin`). Do not assume a local branch matching `headRefName` exists: the PR may come from a fork, the local branch may have been deleted, the clone may not have fetched it, or the user may be running the skill from a different branch. Resolve the PR's head commit via the **`refs/pull/<number>/head`** ref, which GitHub makes available on every PR regardless of source repository.
 
-Fetch both the base ref (in case it isn't local yet) and the PR head ref in one step:
+Fetch both the base ref (in case it isn't local yet) and the PR head ref in one step, then capture the head SHA immediately:
 
 ```bash
 git fetch --no-tags <base-remote> <baseRefName> "refs/pull/<number>/head"
 PR_HEAD_SHA=$(git rev-parse FETCH_HEAD)
 ```
 
-Capture `PR_HEAD_SHA` immediately so subsequent fetches do not overwrite `FETCH_HEAD`.
+**`FETCH_HEAD` is ephemeral.** Do not run other `git fetch` commands, do not dispatch parallel shell operations that might fetch, and do not separate the fetch and `rev-parse` steps across tool calls. Capture into `PR_HEAD_SHA` synchronously in the same shell invocation, then use `$PR_HEAD_SHA` for every subsequent git command. If anything else runs a fetch between these two steps, `FETCH_HEAD` will be overwritten and `rev-parse` will return the wrong SHA.
 
 Gather merge base, commit list, and full diff using the resolved SHA (not `headRefName`):
 
@@ -232,26 +236,37 @@ If the repo has documented style preferences in context, follow those. Otherwise
 
 Include a visual aid only when the change is structurally complex enough that a reviewer would struggle to reconstruct the mental model from prose alone.
 
-**When to include:**
+**The core distinction — structure vs. parallel variation:**
+
+- Use a **Mermaid diagram** when the change has **topology** — components with directed relationships (calls, flows, dependencies, state transitions, data paths). Diagrams express "A talks to B, B talks to C, C does not talk back to A" in a way tables cannot.
+- Use a **markdown table** when the change has **parallel variation of a single shape** — N things that share the same attributes but differ in their values. Tables express "option 1 costs X, option 2 costs Y, option 3 costs Z" cleanly.
+
+Architecture changes are almost always topology (components + edges), so Mermaid is usually the right call — a table of "components that interact" loses the edges and becomes a flat list. Reserve tables for genuinely parallel data: before/after measurements, option trade-offs, flag matrices, config enumerations.
+
+**When to include (prefer Mermaid, not a table, for architecture/flow):**
 
 | PR changes... | Visual aid |
 |---|---|
-| Architecture touching 3+ interacting components | Mermaid component or interaction diagram |
-| Multi-step workflow or data flow with non-obvious sequencing | Mermaid flow diagram |
-| 3+ behavioral modes, states, or variants | Markdown comparison table |
-| Before/after performance or behavioral data | Markdown table |
-| Data model changes with 3+ related entities | Mermaid ERD |
+| Architecture touching 3+ interacting components (the components have *directed relationships* — who calls whom, who owns what, which skill delegates to which) | **Mermaid** component or interaction diagram. Do not substitute a table — tables cannot show edges. |
+| Multi-step workflow or data flow with non-obvious sequencing | **Mermaid** flow diagram |
+| State machine with 3+ states and non-trivial transitions | **Mermaid** state diagram |
+| Data model changes with 3+ related entities | **Mermaid** ERD |
+| Before/after performance or behavioral measurements (same metric, different values) | **Markdown table** |
+| Option or flag trade-offs (same attributes evaluated across variants) | **Markdown table** |
+| Feature matrix / compatibility grid | **Markdown table** |
 
-**When to skip:**
+**When in doubt, ask: "Does the information have edges (A → B) or does it have rows (attribute × variant)?"** Edges → Mermaid. Rows → table. Architecture has edges almost by definition.
+
+**When to skip any visual:**
 - Sizing routes to "1-2 sentences"
 - Prose already communicates clearly
 - The diagram would just restate the diff visually
 - Mechanical changes (renames, dep bumps, config, formatting)
 
-**Format:**
-- **Mermaid** (default) for flows, interactions, dependencies. 5-10 nodes typical, up to 15 for genuinely complex changes. Use `TB` direction. Source should be readable as fallback.
+**Format details:**
+- **Mermaid** (default for topology). 5-10 nodes typical, up to 15 for genuinely complex changes. Use `TB` direction. Source should be readable as fallback.
 - **ASCII diagrams** for annotated flows needing rich in-box content. 80-column max.
-- **Markdown tables** for comparisons and decision matrices.
+- **Markdown tables** for parallel-variation data only.
 - Place inline at point of relevance, not in a separate section.
 - Prose is authoritative when it conflicts with a visual.
 
