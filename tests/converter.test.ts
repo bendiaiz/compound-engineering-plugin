@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test"
+import { promises as fs } from "fs"
 import path from "path"
 import { loadClaudePlugin } from "../src/parsers/claude"
 import { convertClaudeToOpenCode, transformSkillContentForOpenCode } from "../src/converters/claude-to-opencode"
@@ -6,6 +7,12 @@ import { parseFrontmatter } from "../src/utils/frontmatter"
 import type { ClaudePlugin } from "../src/types/claude"
 
 const fixtureRoot = path.join(import.meta.dir, "fixtures", "sample-plugin")
+const compoundEngineeringRoot = path.join(
+  import.meta.dir,
+  "..",
+  "plugins",
+  "compound-engineering",
+)
 
 describe("convertClaudeToOpenCode", () => {
   test("from-command mode: map allowedTools to global permission block", async () => {
@@ -402,6 +409,55 @@ Run \`/compound-engineering-setup\` to create a settings file.`,
     const parsed = parseFrontmatter(commandFile!.content)
     expect(parsed.data.description).toBe("Test description")
     expect(parsed.body).toContain("Do the thing")
+  })
+})
+
+describe("ce-polish-beta skill packaging", () => {
+  // The "each skill directory is self-contained" repo rule forbids
+  // cross-skill file references (see AGENTS.md). ce-polish-beta needs the
+  // same base-branch resolution logic as ce-review, so the script is
+  // duplicated by design. These tests lock that duplication invariant:
+  // if either copy drifts or disappears, the converter output tree will
+  // silently lose the script, so we fail loudly here instead.
+
+  test("ships references/resolve-base.sh in the skill's converted source tree", async () => {
+    const plugin = await loadClaudePlugin(compoundEngineeringRoot)
+    const bundle = convertClaudeToOpenCode(plugin, {
+      agentMode: "subagent",
+      inferTemperature: false,
+      permissions: "none",
+    })
+
+    const polishSkill = bundle.skillDirs.find((dir) => dir.name === "ce:polish-beta")
+    expect(polishSkill).toBeDefined()
+
+    const scriptPath = path.join(polishSkill!.sourceDir, "references", "resolve-base.sh")
+    const stat = await fs.stat(scriptPath)
+    expect(stat.isFile()).toBe(true)
+  })
+
+  test("ce-polish-beta resolve-base.sh matches ce-review byte-for-byte", async () => {
+    const reviewScript = path.join(
+      compoundEngineeringRoot,
+      "skills",
+      "ce-review",
+      "references",
+      "resolve-base.sh",
+    )
+    const polishScript = path.join(
+      compoundEngineeringRoot,
+      "skills",
+      "ce-polish-beta",
+      "references",
+      "resolve-base.sh",
+    )
+
+    const [reviewContent, polishContent] = await Promise.all([
+      fs.readFile(reviewScript, "utf8"),
+      fs.readFile(polishScript, "utf8"),
+    ])
+
+    expect(polishContent).toBe(reviewContent)
   })
 })
 

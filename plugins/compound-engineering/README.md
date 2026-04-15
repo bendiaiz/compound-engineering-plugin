@@ -102,6 +102,7 @@ For `/ce-optimize`, see [`skills/ce-optimize/README.md`](./skills/ce-optimize/RE
 
 | Skill | Description |
 |-------|-------------|
+| `/ce:polish-beta` | Human-in-the-loop polish phase after /ce:review — verifies review + CI, starts a dev server from `.claude/launch.json`, generates a testable checklist, and dispatches polish sub-agents for fixes. Emits stacked-PR seeds for oversized work |
 | `/lfg` | Full autonomous engineering workflow |
 
 ## Agents
