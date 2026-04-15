@@ -182,10 +182,11 @@ The working-tree diff from Step 1 only shows uncommitted changes at invocation t
 
 If none resolve, ask the user to specify the target branch.
 
-**Gather the full branch diff (before evidence decision).** The working-tree diff from Step 1 only reflects uncommitted changes at invocation time — on the common "feature branch, all pushed, open PR" path, Step 1 skips the commit/push steps and the working-tree diff is empty. The evidence decision below needs the real branch diff to judge whether behavior is observable, so compute it explicitly against the base resolved above:
+**Gather the full branch diff (before evidence decision).** The working-tree diff from Step 1 only reflects uncommitted changes at invocation time — on the common "feature branch, all pushed, open PR" path, Step 1 skips the commit/push steps and the working-tree diff is empty. The evidence decision below needs the real branch diff to judge whether behavior is observable, so compute it explicitly against the base resolved above. Only fetch when the local ref isn't available — if `<base-remote>/<base-branch>` already resolves locally, run the diff from local state so offline / restricted-network / expired-auth environments don't hard-fail:
 
 ```bash
-git fetch --no-tags <base-remote> <base-branch>
+git rev-parse --verify <base-remote>/<base-branch> >/dev/null 2>&1 \
+  || git fetch --no-tags <base-remote> <base-branch>
 git diff <base-remote>/<base-branch>...HEAD
 ```
 
