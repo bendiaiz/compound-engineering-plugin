@@ -1,7 +1,7 @@
 ---
 name: ce-pr-description
 description: "Write or regenerate a value-first pull-request description (title + body) from an existing PR or a diff range. Use when the user says 'write a PR description', 'refresh the PR description', 'regenerate the PR body', 'rewrite this PR', 'freshen the PR', 'update the PR description', 'draft a PR body for this diff', 'describe this PR properly', 'generate the PR title', or pastes a GitHub PR URL and asks to rewrite or refresh its description. Also used internally by git-commit-push-pr (single-PR flow) and ce-pr-stack (per-layer stack descriptions) so all callers share one writing voice. Accepts pr:<number-or-url> (existing open PR — bare number for the current repo, or a full https://github.com/.../pull/NN URL for any repo), range:<base>..<head> (pre-PR or dry-run), plus an optional focus:<hint>. Returns structured {title, body} for the caller to apply via gh pr edit or gh pr create — this skill never edits the PR itself and never prompts for confirmation."
-argument-hint: "[pr:<number-or-url> | range:<base>..<head>] [focus:<hint>] — pr: accepts a bare number (current repo) or a full https://github.com/.../pull/NN URL (any repo); range: works from any diff (fork PRs and non-local base refs handled automatically); focus: optional steering hint"
+argument-hint: "[pr:<number-or-url> | range:<base>..<head>] [focus:<hint>]"
 ---
 
 # CE PR Description
