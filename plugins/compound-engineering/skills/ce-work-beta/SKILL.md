@@ -192,8 +192,7 @@ Determine how to proceed based on what was provided in `<input_document>`.
 
    1. Build a file-to-unit mapping from every candidate unit's `Files:` section (Create, Modify, and Test paths)
    2. Check for intersection — any file path appearing in 2+ units means overlap
-   3. Check for implicit overlap — does a unit's test file import or exercise implementation files listed in another unit?
-   4. If any overlap is found, downgrade to serial subagents. Log the reason (e.g., "Units 2 and 4 share `config/routes.rb` — using serial dispatch"). Serial subagents still provide context-window isolation without shared-directory risks
+   3. If any overlap is found, downgrade to serial subagents. Log the reason (e.g., "Units 2 and 4 share `config/routes.rb` — using serial dispatch"). Serial subagents still provide context-window isolation without shared-directory risks
 
    Even with no file overlap, parallel subagents sharing a working directory face git index contention (concurrent staging/committing corrupts the index) and test interference (concurrent test runs pick up each other's in-progress changes). The parallel subagent constraints below mitigate these.
 
