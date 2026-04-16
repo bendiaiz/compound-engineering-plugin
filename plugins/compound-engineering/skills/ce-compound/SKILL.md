@@ -168,7 +168,7 @@ Launch research subagents. Each returns text data to the orchestrator.
 
 #### 4. **Session Historian** (foreground, after launching the above — only if the user opted in)
    - **Skip entirely** if the user declined session history in the follow-up question
-   - Dispatched as `compound-engineering:research:ce-session-historian`
+   - Dispatched as `research:ce-session-historian`
    - Dispatch in **foreground** — this agent reads session files outside the working directory (`~/.claude/projects/`, `~/.codex/sessions/`, `~/.cursor/projects/`) which background agents may not have access to
    - Searches prior Claude Code, Codex, and Cursor sessions for the same project to find related investigation context
    - Correlates sessions by repo name across all platforms (matches sessions from main checkouts, worktrees, and Conductor workspaces)
