@@ -140,12 +140,9 @@ parse_env_port() {
   local value
   value="${line#PORT=}"
 
-  # Trim leading/trailing whitespace first
-  value=$(printf '%s' "$value" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-
-  # Truncate at # (inline comment) -- must happen BEFORE quote stripping
-  # so PORT="3001" # comment -> "3001" -> 3001
-  value=$(printf '%s' "$value" | sed 's/[[:space:]]*#.*$//')
+  # Trim whitespace, then truncate at # (inline comment) -- comment stripping
+  # must happen BEFORE quote stripping so PORT="3001" # comment -> "3001" -> 3001
+  value=$(printf '%s' "$value" | sed 's/^[[:space:]]*//;s/[[:space:]]*#.*$//;s/[[:space:]]*$//')
 
   # Strip surrounding double quotes
   value="${value%\"}"
@@ -195,20 +192,14 @@ if should_probe "$PROJ_TYPE" "framework-config"; then
       continue
     fi
 
-    # Conservative regex: match "port:" followed by optional whitespace then
-    # ONLY digits (optionally quoted). Reject lines where the value contains
-    # non-numeric characters (variable references, function calls, etc.).
-    local_port=$(grep -Eo 'port:[[:space:]]*["'"'"']?[0-9]+["'"'"']?' "$cfg" 2>/dev/null | head -1 | grep -Eo '[0-9]+')
+    # Conservative regex: match "port:" + digits, then verify nothing non-numeric
+    # follows (rejects variable references like "port: process.env.PORT || 3000").
+    local_line=$(grep -E 'port:[[:space:]]*["'"'"']?[0-9]+' "$cfg" 2>/dev/null | head -1)
+    if [ -z "$local_line" ]; then continue; fi
 
+    local_port=$(printf '%s' "$local_line" | grep -Eo 'port:[[:space:]]*["'"'"']?[0-9]+["'"'"']?' | head -1 | grep -Eo '[0-9]+')
     if [ -n "$local_port" ]; then
-      # Verify the original line doesn't contain non-numeric noise after the
-      # port number (e.g., "port: process.env.PORT || 3000"). We re-read the
-      # matching line and check that after "port: <digits>" there is only
-      # whitespace, quotes, commas, closing braces, or end of line.
-      local_line=$(grep -E 'port:[[:space:]]*["'"'"']?[0-9]+' "$cfg" 2>/dev/null | head -1)
-      # Strip everything up to and including the port number
       local_after=$(printf '%s' "$local_line" | sed "s/.*port:[[:space:]]*[\"']*${local_port}[\"']*//" )
-      # Check that what remains is only benign characters (or empty)
       if [ -z "$local_after" ] || printf '%s' "$local_after" | grep -qE '^[[:space:],})]*$'; then
         echo "$local_port"
         exit 0

@@ -24,10 +24,10 @@ bun run dev
 ```
 
 Prefer the package manager indicated by the lockfile:
-- `pnpm-lock.yaml` → `pnpm dev`
-- `yarn.lock` → `yarn dev`
-- `bun.lock` / `bun.lockb` → `bun run dev`
-- `package-lock.json` or none → `npm run dev`
+- `pnpm-lock.yaml` -> `pnpm dev`
+- `yarn.lock` -> `yarn dev`
+- `bun.lock` / `bun.lockb` -> `bun run dev`
+- `package-lock.json` or none -> `npm run dev`
 
 ## Port
 
