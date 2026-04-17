@@ -186,17 +186,15 @@ Ask the user with the platform's blocking question tool (`AskUserQuestion` in Cl
 
 **Question:** "Proof review pass done. What's next?"
 
-Offer options that cover these intents — use concrete user-facing labels, not agent-internal jargon (no "end-sync", "ingest pass", etc.). Only include the options that fit the current state. Some blocking-question tools cap at 4 visible options (e.g., `AskUserQuestion`), so pick the most useful subset rather than listing all five. Keep the `[short label] — [description]` shape consistent across every option to avoid a mixed-voice menu.
+Offer options that cover these intents — use concrete user-facing labels, not agent-internal jargon (no "end-sync", "ingest pass", etc.). Only include the options that fit the current state. Keep labels imperative and third-person (no "I'll" / "I'm" — it is ambiguous in a tool-mediated menu whether the speaker is the user or the agent) and keep the `[short label] — [description]` shape consistent across every option. A "still working, come back later" option is not offered: the blocking question already waits, so that option would be a no-op wrapper (per the Interactive Question Tool Design rules in `plugins/compound-engineering/AGENTS.md`).
 
-- **Wait** → `Wait — I'll add more comments in Proof`
-  User stays in Proof to respond; re-ingest when they say they're back (loops to Phase 2).
-- **Discuss in terminal** → `Discuss — walk through the open threads in terminal`
+- **Discuss** → `Discuss — walk through the open threads in terminal`
   Talk through open threads in the terminal; the agent echoes decisions back to Proof threads. Only useful when escalations are open.
-- **Proceed** → `I'm done — save the reviewed doc back to my local file`
+- **Proceed** → `Save — save the reviewed doc back to the local file`
   Go to Phase 5 end-sync. If escalations are still open, name that in the label (e.g., `Save with 3 threads still open`) so the user is accepting the tradeoff explicitly instead of via a nested confirm.
 - **Another pass** → `Re-check — look for new comments in Proof`
   Re-read state and re-ingest. Worth offering even after a clean pass, since the user may have added comments while the report rendered.
-- **Done for now** → `Pause — don't save yet, I'll come back`
+- **Done for now** → `Pause — stop without saving`
   Stop without syncing; return to caller with `status: done_for_now`, no end-sync.
 
 The sync confirmation happens in Phase 5 regardless of whether threads are open — this step only asks what the user wants next, not whether to overwrite the local file.
@@ -291,9 +289,12 @@ mutate() {
     -H "Content-Type: application/json" \
     -H "x-share-token: $TOKEN" \
     -H "X-Agent-Id: $AGENT_ID" \
+    -H "Idempotency-Key: $(uuidgen)" \
     -d "$(jq -n --arg base "$BASE" --argjson payload "$PAYLOAD" '$payload + {baseToken: $base}')"
 }
 ```
+
+Every mutation sends a fresh `Idempotency-Key` so retries on network hiccups do not double-apply the op. This is required when `/state.contract.idempotencyRequired` is true and harmless otherwise.
 
 On `STALE_BASE` in the response, re-run — the state read picks up the fresh token automatically.
 
