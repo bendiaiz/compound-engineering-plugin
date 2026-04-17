@@ -285,10 +285,10 @@ describe("ce-brainstorm review contract", () => {
     expect(content).toContain("`references/handoff.md`")
 
     // Additional review passes are surfaced contextually (not as a menu fixture) and still
-    // route through the document-review skill when requested
+    // route through the ce-doc-review skill when requested
     const handoff = await readRepoFile("plugins/compound-engineering/skills/ce-brainstorm/references/handoff.md")
     expect(handoff).toContain("Surface additional document review contextually")
-    expect(handoff).toContain("Load the `document-review` skill")
+    expect(handoff).toContain("Load the `ce-doc-review` skill")
     expect(handoff).not.toContain("**Review and refine**")
   })
 })
@@ -344,12 +344,12 @@ describe("ce-plan review contract", () => {
     expect(content).toContain("**Start `/ce-work`** (recommended) - Begin implementing this plan in the current session")
 
     // Additional review passes are surfaced contextually (not as a menu fixture) and still
-    // route through the document-review skill when requested
+    // route through the ce-doc-review skill when requested
     expect(content).toContain("Surface additional document review contextually")
-    expect(content).toContain("Load the `document-review` skill")
+    expect(content).toContain("Load the `ce-doc-review` skill")
 
     // No conditional ordering based on plan depth (review already ran)
-    expect(content).not.toContain("**Options when document-review is recommended:**")
+    expect(content).not.toContain("**Options when ce-doc-review is recommended:**")
     expect(content).not.toContain("**Options for Standard or Lightweight plans:**")
   })
 })
