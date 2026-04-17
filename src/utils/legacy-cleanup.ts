@@ -138,6 +138,40 @@ const LEGACY_SKILL_DESCRIPTION_ALIASES: Record<string, string[]> = {
   ],
 }
 
+/**
+ * Historical frontmatter descriptions for stale skill dirs that no longer have
+ * a current ce-* replacement shipped in the plugin. Because
+ * `loadLegacyFingerprints` normally derives the ownership fingerprint by reading
+ * the description of the current (renamed) skill, entries listed here would
+ * otherwise be skipped and never cleaned up on upgrade.
+ *
+ * Each value is the full `description:` frontmatter string from the last
+ * plugin version that shipped the legacy skill. Keep in sync with git history
+ * — the exact string is the ownership proof.
+ */
+const LEGACY_ONLY_SKILL_DESCRIPTIONS: Record<string, string> = {
+  "claude-permissions-optimizer":
+    "Optimize Claude Code permissions by finding safe Bash commands from session history and auto-applying them to settings.json. Can run from any coding agent but targets Claude Code specifically. Use when experiencing permission fatigue, too many permission prompts, wanting to optimize permissions, or needing to set up allowlists. Triggers on \"optimize permissions\", \"reduce permission prompts\", \"allowlist commands\", \"too many permission prompts\", \"permission fatigue\", \"permission setup\", or complaints about clicking approve too often.",
+  "feature-video":
+    "Record a video walkthrough of a feature and add it to the PR description. Use when a PR needs a visual demo for reviewers, when the user asks to demo a feature, create a PR video, record a walkthrough, show what changed visually, or add a video to a pull request.",
+  "orchestrating-swarms":
+    "This skill should be used when orchestrating multi-agent swarms using Claude Code's TeammateTool and Task system. It applies when coordinating multiple agents, running parallel code reviews, creating pipeline workflows with dependencies, building self-organizing task queues, or any task benefiting from divide-and-conquer patterns.",
+  "reproduce-bug":
+    "Systematically reproduce and investigate a bug from a GitHub issue. Use when the user provides a GitHub issue number or URL for a bug they want reproduced or investigated.",
+}
+
+/**
+ * Historical frontmatter descriptions for stale agent names that no longer
+ * have a current ce-* replacement shipped in the plugin. Same purpose and
+ * contract as `LEGACY_ONLY_SKILL_DESCRIPTIONS`.
+ */
+const LEGACY_ONLY_AGENT_DESCRIPTIONS: Record<string, string> = {
+  "bug-reproduction-validator":
+    "Systematically reproduces and validates bug reports to confirm whether reported behavior is an actual bug. Use when you receive a bug report or issue that needs verification.",
+  "lint":
+    "Use this agent when you need to run linting and code quality checks on Ruby and ERB files. Run before pushing to origin.",
+}
+
 type LegacyFingerprints = {
   skills: Map<string, string>
   agents: Map<string, string>
@@ -269,16 +303,27 @@ async function loadLegacyFingerprints(): Promise<LegacyFingerprints> {
 
       for (const legacyName of STALE_SKILL_DIRS) {
         const currentPath = skillIndex.get(currentSkillNameForLegacy(legacyName))
-        if (!currentPath) continue
-        const description = await readDescription(currentPath)
-        if (description) skills.set(legacyName, description)
+        if (currentPath) {
+          const description = await readDescription(currentPath)
+          if (description) skills.set(legacyName, description)
+          continue
+        }
+        // No current ce-* replacement shipped. Fall back to the hardcoded
+        // historical description so cleanup can still fingerprint the
+        // legacy-only artifact on upgrade.
+        const legacyOnly = LEGACY_ONLY_SKILL_DESCRIPTIONS[legacyName]
+        if (legacyOnly) skills.set(legacyName, legacyOnly)
       }
 
       for (const legacyName of STALE_AGENT_NAMES) {
         const currentPath = agentIndex.get(`ce-${legacyName}`)
-        if (!currentPath) continue
-        const description = await readDescription(currentPath)
-        if (description) agents.set(legacyName, description)
+        if (currentPath) {
+          const description = await readDescription(currentPath)
+          if (description) agents.set(legacyName, description)
+          continue
+        }
+        const legacyOnly = LEGACY_ONLY_AGENT_DESCRIPTIONS[legacyName]
+        if (legacyOnly) agents.set(legacyName, legacyOnly)
       }
 
       for (const fileName of STALE_PROMPT_FILES) {

@@ -168,6 +168,54 @@ describe("cleanupStaleSkillDirs", () => {
     expect(removed).toBe(1)
     expect(await exists(path.join(root, "setup"))).toBe(false)
   })
+
+  test("removes legacy-only skills that no longer ship a ce-* replacement", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "cleanup-legacy-only-skills-"))
+    // `feature-video` and `reproduce-bug` were shipped by older plugin versions
+    // but have no current ce-* counterpart. Their fingerprints come from the
+    // LEGACY_ONLY_SKILL_DESCRIPTIONS map, not from a live plugin file.
+    await createDir(
+      path.join(root, "feature-video"),
+      skillContent(
+        "feature-video",
+        "Record a video walkthrough of a feature and add it to the PR description. Use when a PR needs a visual demo for reviewers, when the user asks to demo a feature, create a PR video, record a walkthrough, show what changed visually, or add a video to a pull request.",
+      ),
+    )
+    await createDir(
+      path.join(root, "reproduce-bug"),
+      skillContent(
+        "reproduce-bug",
+        "Systematically reproduce and investigate a bug from a GitHub issue. Use when the user provides a GitHub issue number or URL for a bug they want reproduced or investigated.",
+      ),
+    )
+    await createDir(
+      path.join(root, "claude-permissions-optimizer"),
+      skillContent(
+        "claude-permissions-optimizer",
+        "Optimize Claude Code permissions by finding safe Bash commands from session history and auto-applying them to settings.json. Can run from any coding agent but targets Claude Code specifically. Use when experiencing permission fatigue, too many permission prompts, wanting to optimize permissions, or needing to set up allowlists. Triggers on \"optimize permissions\", \"reduce permission prompts\", \"allowlist commands\", \"too many permission prompts\", \"permission fatigue\", \"permission setup\", or complaints about clicking approve too often.",
+      ),
+    )
+
+    const removed = await cleanupStaleSkillDirs(root)
+
+    expect(removed).toBe(3)
+    expect(await exists(path.join(root, "feature-video"))).toBe(false)
+    expect(await exists(path.join(root, "reproduce-bug"))).toBe(false)
+    expect(await exists(path.join(root, "claude-permissions-optimizer"))).toBe(false)
+  })
+
+  test("preserves same-named user skills for legacy-only entries when content differs", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "cleanup-legacy-only-user-"))
+    await createDir(
+      path.join(root, "reproduce-bug"),
+      skillContent("reproduce-bug", "A project-local reproduce-bug helper unrelated to compound-engineering."),
+    )
+
+    const removed = await cleanupStaleSkillDirs(root)
+
+    expect(removed).toBe(0)
+    expect(await exists(path.join(root, "reproduce-bug"))).toBe(true)
+  })
 })
 
 describe("cleanupStaleAgents", () => {
@@ -296,6 +344,34 @@ describe("cleanupStaleAgents", () => {
 
     expect(removed).toBe(0)
     expect(await exists(path.join(root, "lint.md"))).toBe(true)
+  })
+
+  test("removes legacy-only agents that no longer ship a ce-* replacement", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "cleanup-agents-legacy-only-"))
+    // `lint` and `bug-reproduction-validator` were removed in an older plugin
+    // release with no ce-* successor. Their fingerprints live in
+    // LEGACY_ONLY_AGENT_DESCRIPTIONS so upgrades from pre-removal installs
+    // still clean them up.
+    await createFile(
+      path.join(root, "lint.md"),
+      agentContent(
+        "lint",
+        "Use this agent when you need to run linting and code quality checks on Ruby and ERB files. Run before pushing to origin.",
+      ),
+    )
+    await createFile(
+      path.join(root, "bug-reproduction-validator.md"),
+      agentContent(
+        "bug-reproduction-validator",
+        "Systematically reproduces and validates bug reports to confirm whether reported behavior is an actual bug. Use when you receive a bug report or issue that needs verification.",
+      ),
+    )
+
+    const removed = await cleanupStaleAgents(root, ".md")
+
+    expect(removed).toBe(2)
+    expect(await exists(path.join(root, "lint.md"))).toBe(false)
+    expect(await exists(path.join(root, "bug-reproduction-validator.md"))).toBe(false)
   })
 })
 

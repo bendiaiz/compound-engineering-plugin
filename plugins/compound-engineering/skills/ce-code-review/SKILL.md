@@ -398,10 +398,10 @@ Generate a unique run identifier before dispatching any agents. This ID scopes a
 
 ```bash
 RUN_ID=$(date +%Y%m%d-%H%M%S)-$(head -c4 /dev/urandom | od -An -tx1 | tr -d ' ')
-mkdir -p ".context/compound-engineering/ce-review/$RUN_ID"
+mkdir -p ".context/compound-engineering/ce-code-review/$RUN_ID"
 ```
 
-Pass `{run_id}` to every persona sub-agent so they can write their full analysis to `.context/compound-engineering/ce-review/{run_id}/{reviewer_name}.json`.
+Pass `{run_id}` to every persona sub-agent so they can write their full analysis to `.context/compound-engineering/ce-code-review/{run_id}/{reviewer_name}.json`.
 
 **Report-only mode:** Skip run-id generation and directory creation. Do not pass `{run_id}` to agents. Agents return compact JSON only with no file write, consistent with report-only's no-write contract.
 
@@ -423,7 +423,7 @@ Persona sub-agents are **read-only** with respect to the project: they review an
 
 Read-only here means **non-mutating**, not "no shell access." Reviewer sub-agents may use non-mutating inspection commands when needed to gather evidence or verify scope, including read-oriented `git` / `gh` usage such as `git diff`, `git show`, `git blame`, `git log`, and `gh pr view`. They must not edit project files, change branches, commit, push, create PRs, or otherwise mutate the checkout or repository state.
 
-Each persona sub-agent writes full JSON (all schema fields) to `.context/compound-engineering/ce-review/{run_id}/{reviewer_name}.json` and returns compact JSON with merge-tier fields only:
+Each persona sub-agent writes full JSON (all schema fields) to `.context/compound-engineering/ce-code-review/{run_id}/{reviewer_name}.json` and returns compact JSON with merge-tier fields only:
 
 ```json
 {
@@ -571,7 +571,7 @@ Coverage:
 Review complete
 ```
 
-**Detail enrichment (headless only):** The headless envelope includes `Why:`, `Evidence:`, and `Suggested fix:` lines. After merge (Stage 5), read the per-agent artifact files from `.context/compound-engineering/ce-review/{run_id}/` for only the findings that survived dedup and confidence gating.
+**Detail enrichment (headless only):** The headless envelope includes `Why:`, `Evidence:`, and `Suggested fix:` lines. After merge (Stage 5), read the per-agent artifact files from `.context/compound-engineering/ce-code-review/{run_id}/` for only the findings that survived dedup and confidence gating.
    - **Field tiers:** `Why:` and `Evidence:` are detail-tier -- load from per-agent artifact files. `Suggested fix:` is merge-tier -- use it directly from the compact return without artifact lookup.
    - **Artifact matching:** For each surviving finding, look up its detail-tier fields in the artifact files of the contributing reviewers. Match on `file + line_bucket(line, +/-3)` (the same tolerance used in Stage 5 dedup) within each contributing reviewer's artifact. When multiple artifact entries fall within the line bucket, apply `normalize(title)` to both the merged finding's title and each candidate entry's title as a tie-breaker.
    - **Reviewer order:** Try contributing reviewers in the order they appear in the merged finding's reviewer list; use the first match.
