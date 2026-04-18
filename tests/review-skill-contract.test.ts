@@ -108,7 +108,7 @@ describe("ce-code-review contract", () => {
 
     // Tracker fallback chain explicitly forbids extending the internal todos system.
     const trackerDefer = await readRepoFile(
-      "plugins/compound-engineering/skills/ce-review/references/tracker-defer.md",
+      "plugins/compound-engineering/skills/ce-code-review/references/tracker-defer.md",
     )
     expect(trackerDefer).toContain(".context/compound-engineering/todos/")
     expect(trackerDefer).toMatch(/Never fall back to `\.context\/compound-engineering\/todos\//)
@@ -117,7 +117,7 @@ describe("ce-code-review contract", () => {
     // rejected synthesis-time rewrite pass. Assert presence of the observable-behavior
     // rule and the required-field reminder without pinning exact prose.
     const subagentTemplate = await readRepoFile(
-      "plugins/compound-engineering/skills/ce-review/references/subagent-template.md",
+      "plugins/compound-engineering/skills/ce-code-review/references/subagent-template.md",
     )
     expect(subagentTemplate).toMatch(/observable behavior/i)
     expect(subagentTemplate).toMatch(/required/i)
@@ -127,7 +127,7 @@ describe("ce-code-review contract", () => {
     // breaks the test. Exact label wording may be refined for clarity — these assertions
     // check the structural contract, not the prose.
     const walkthrough = await readRepoFile(
-      "plugins/compound-engineering/skills/ce-review/references/walkthrough.md",
+      "plugins/compound-engineering/skills/ce-code-review/references/walkthrough.md",
     )
     expect(walkthrough).toContain("Apply the proposed fix")
     expect(walkthrough).toContain("Defer — file a [TRACKER] ticket")
@@ -136,7 +136,7 @@ describe("ce-code-review contract", () => {
 
     // bulk-preview.md contract: exactly Proceed / Cancel, no third option.
     const bulkPreview = await readRepoFile(
-      "plugins/compound-engineering/skills/ce-review/references/bulk-preview.md",
+      "plugins/compound-engineering/skills/ce-code-review/references/bulk-preview.md",
     )
     expect(bulkPreview).toContain("Proceed")
     expect(bulkPreview).toContain("Cancel")
