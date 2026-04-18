@@ -39,7 +39,7 @@ Render as markdown. Labels on their own line, blank lines between sections:
 
 **Proposed fix**
 
-{suggested_fix, as a code block when it is a diff or literal change}
+{suggested_fix — rendered per the substitution rules below: prose-first, intent-language}
 
 **Why it works**
 
