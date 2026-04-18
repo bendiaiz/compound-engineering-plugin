@@ -141,7 +141,7 @@ When reviewers disagreed or content context cuts against the default, still mark
 
 - **Advisory-only finding:** when the finding's `autofix_class` is `advisory` (no actionable fix), option A is replaced with `Acknowledge — mark as reviewed`. The other three options remain. The advisory variant is the only case where `Acknowledge` appears in the menu.
 - **N=1 (exactly one pending finding):** the terminal block's heading omits `Finding N of M` and renders as `## {severity} {plain-English title}`. The stem's first line drops the position counter, becoming `{severity} {short handle}.` Option D (`LFG the rest`) is suppressed because no subsequent findings exist — the menu shows three options: Apply / Defer / Skip (or Acknowledge, for advisory).
-- **No-sink (Defer option unavailable):** when the tracker-detection tuple reports `any_sink_available: false` (every tier in the fallback chain — named tracker, GitHub Issues, harness primitive — is unreachable), option B (`Defer`) is omitted. The stem appends one line explaining why (e.g., `Defer unavailable on this platform — no tracker or task-tracking primitive detected.`). The menu shows three options: Apply / Skip / LFG the rest (and Acknowledge in place of Apply for advisory-only findings).
+- **No-sink (Defer option unavailable):** when the tracker-detection tuple reports `any_sink_available: false` (every tier in the fallback chain — named tracker, GitHub Issues, harness primitive — is unreachable), option B (`Defer`) is omitted. The stem appends one line explaining why (e.g., `Defer unavailable on this platform — no tracker or task-tracking primitive detected.`). The menu shows three options: Apply / Skip / LFG the rest (and Acknowledge in place of Apply for advisory-only findings). **Before rendering the options, remap any per-finding `Defer` recommendation produced by Stage 5 step 7b to `Skip`** so the `(recommended)` marker always lands on an option that is actually in the menu. When the remap fires, surface it on the R15 conflict context line (e.g., `Stage 5 recommended Defer; downgraded to Skip — no tracker sink available.`). This is a render-time runtime step mirroring the Defer→Skip downgrade that `bulk-preview.md` performs for LFG previews; Stage 5 step 7b has no knowledge of sink availability and only orders conflicting reviewer recommendations.
 - **Combined N=1 + no-sink:** the menu shows two options: Apply / Skip (or Acknowledge / Skip).
 
 Only when `ToolSearch` explicitly returns no match or the tool call errors — or on a platform with no blocking question tool — fall back to presenting the options as a numbered list and waiting for the user's next reply.
@@ -221,10 +221,20 @@ The report appears after all execution completes. Ordering inside the report: fa
 
 ### Zero-findings degenerate case
 
-When the routing question was skipped because no `gated_auto` / `manual` findings remained after `safe_auto`, the completion report collapses to its summary-counts + verdict form with one added line — the count of `safe_auto` fixes applied. Example:
+When the routing question was skipped because no `gated_auto` / `manual` findings remained after `safe_auto`, the completion report collapses to its summary-counts + verdict form with one added line — the count of `safe_auto` fixes applied. The summary wording mirrors `SKILL.md` Step 2 Interactive mode's zero-remaining case: the unqualified `All findings resolved` form is only accurate when no advisory or pre-existing findings remain. When advisory and/or pre-existing findings remain in the report, use the qualified form that names what was cleared and names what still remains. Examples:
+
+No remaining advisory or pre-existing findings:
 
 ```
 All findings resolved — 3 safe_auto fixes applied.
+
+Verdict: Ready with fixes.
+```
+
+Advisory and/or pre-existing findings remain in the report:
+
+```
+All actionable findings resolved — 3 safe_auto fixes applied. (2 advisory, 1 pre-existing findings remain in the report.)
 
 Verdict: Ready with fixes.
 ```
