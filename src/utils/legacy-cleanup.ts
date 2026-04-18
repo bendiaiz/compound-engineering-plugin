@@ -139,6 +139,72 @@ const LEGACY_SKILL_DESCRIPTION_ALIASES: Record<string, string[]> = {
 }
 
 /**
+ * Known historical `description:` frontmatter values we have shipped for each
+ * Codex prompt wrapper, keyed by stale file name. Pairs with the body
+ * fingerprint in `isLegacyPromptWrapper` to form a two-signal ownership check:
+ * the instruction boilerplate alone is emitted by `renderPrompt` for every
+ * plugin, so matching it in isolation would let this cleanup delete another
+ * plugin's same-named wrapper from a shared `~/.codex/prompts/` directory.
+ *
+ * Each entry is the exact frontmatter description string from a shipped
+ * compound-engineering release (all skill rewords across versions, including
+ * the ce:/ce- prefix transition). The current shipped description for the
+ * renamed skill is also accepted automatically via `loadLegacyFingerprints`,
+ * so only historical values need to live here.
+ *
+ * Adding a new release that reworks one of these descriptions means adding
+ * the previous description here so upgrades from that version still clean up
+ * cleanly. Missing an entry only leaves one orphaned wrapper on upgrade (a
+ * mild regression); matching too broadly would delete another plugin's file
+ * (a destructive bug). Err on the side of omission.
+ */
+const LEGACY_PROMPT_DESCRIPTION_ALIASES: Record<string, string[]> = {
+  "ce-plan.md": [
+    "Create structured plans for any multi-step task -- software features, research workflows, events, study plans, or any goal that benefits from structured breakdown. Also deepen existing plans with interactive review of sub-agent findings. Use for plan creation when the user says 'plan this', 'create a plan', 'write a tech plan', 'plan the implementation', 'how should we build', 'what's the approach for', 'break this down', 'plan a trip', 'create a study plan', or when a brainstorm/requirements document is ready for planning. Use for plan deepening when the user says 'deepen the plan', 'deepen my plan', 'deepening pass', or uses 'deepen' in reference to a plan.",
+    "Create structured plans for any multi-step task -- software features, research workflows, events, study plans, or any goal that benefits from structured breakdown. Also deepen existing plans with interactive review of sub-agent findings.",
+    "Transform feature descriptions or requirements into implementation plans grounded in repo patterns and research.",
+  ],
+  "ce-work.md": [
+    "Execute work efficiently while maintaining quality and finishing features",
+    "Transform feature descriptions or requirements into implementation plans grounded in repo patterns and research.",
+  ],
+  "ce-work-beta.md": [
+    "[BETA] Execute work with external delegate support. Same as ce-work but includes experimental Codex delegation mode for token-conserving code implementation.",
+    "[BETA] Execute work with external delegate support. Same as ce:work but includes experimental Codex delegation mode for token-conserving code implementation.",
+  ],
+  "ce-brainstorm.md": [
+    "Explore requirements and approaches through collaborative dialogue before writing a right-sized requirements document and planning implementation. Use for feature ideas, problem framing, when the user says 'let's brainstorm', or when they want to think through options before deciding what to build. Also use when a user describes a vague or ambitious feature request, asks 'what should we build', 'help me think through X', presents a problem with multiple valid solutions, or seems unsure about scope or direction — even if they don't explicitly ask to brainstorm.",
+  ],
+  "ce-ideate.md": [
+    "Generate and critically evaluate grounded ideas about a topic. Use when asking what to improve, requesting idea generation, exploring surprising directions, or wanting the AI to proactively suggest strong options before brainstorming one in depth. Triggers on phrases like 'what should I improve', 'give me ideas', 'ideate on X', 'surprise me', 'what would you change', or any request for AI-generated suggestions rather than refining the user's own idea.",
+  ],
+  "ce-compound.md": [
+    "Document a recently solved problem to compound your team's knowledge",
+  ],
+  "ce-compound-refresh.md": [
+    "Refresh stale or drifting learnings and pattern docs in docs/solutions/ by reviewing, updating, consolidating, replacing, or deleting them against the current codebase. Use after refactors, migrations, dependency upgrades, or when a retrieved learning feels outdated or wrong. Also use when reviewing docs/solutions/ for accuracy, when a recently solved problem contradicts an existing learning, when pattern docs no longer reflect current code, or when multiple docs seem to cover the same topic and might benefit from consolidation.",
+  ],
+  "ce-review.md": [
+    "Structured code review using tiered persona agents, confidence-gated findings, and a merge/dedup pipeline. Use when reviewing code changes before creating a PR.",
+  ],
+}
+
+/** The compound-engineering skill whose current description should also be
+ * accepted as an ownership signal for a given stale prompt file. Provides the
+ * "current shipped description" leg of the two-signal check so that the alias
+ * map above does not need to be touched on every routine description edit. */
+const LEGACY_PROMPT_CURRENT_SKILL_FOR_FILE: Record<string, string> = {
+  "ce-brainstorm.md": "ce-brainstorm",
+  "ce-compound.md": "ce-compound",
+  "ce-compound-refresh.md": "ce-compound-refresh",
+  "ce-ideate.md": "ce-ideate",
+  "ce-plan.md": "ce-plan",
+  "ce-review.md": "ce-code-review",
+  "ce-work.md": "ce-work",
+  "ce-work-beta.md": "ce-work-beta",
+}
+
+/**
  * Historical frontmatter descriptions for stale skill dirs that no longer have
  * a current ce-* replacement shipped in the plugin. Because
  * `loadLegacyFingerprints` normally derives the ownership fingerprint by reading
@@ -175,6 +241,7 @@ const LEGACY_ONLY_AGENT_DESCRIPTIONS: Record<string, string> = {
 type LegacyFingerprints = {
   skills: Map<string, string>
   agents: Map<string, string>
+  prompts: Map<string, string>
 }
 
 let legacyFingerprintsPromise: Promise<LegacyFingerprints> | null = null
@@ -287,7 +354,7 @@ async function loadLegacyFingerprints(): Promise<LegacyFingerprints> {
     legacyFingerprintsPromise = (async () => {
       const repoRoot = await findRepoRoot(path.dirname(fileURLToPath(import.meta.url)))
       if (!repoRoot) {
-        return { skills: new Map(), agents: new Map() }
+        return { skills: new Map(), agents: new Map(), prompts: new Map() }
       }
 
       const pluginRoot = path.join(repoRoot, "plugins", "compound-engineering")
@@ -298,6 +365,7 @@ async function loadLegacyFingerprints(): Promise<LegacyFingerprints> {
 
       const skills = new Map<string, string>()
       const agents = new Map<string, string>()
+      const prompts = new Map<string, string>()
 
       for (const legacyName of STALE_SKILL_DIRS) {
         const currentPath = skillIndex.get(currentSkillNameForLegacy(legacyName))
@@ -324,7 +392,14 @@ async function loadLegacyFingerprints(): Promise<LegacyFingerprints> {
         if (legacyOnly) agents.set(legacyName, legacyOnly)
       }
 
-      return { skills, agents }
+      for (const [fileName, skillName] of Object.entries(LEGACY_PROMPT_CURRENT_SKILL_FOR_FILE)) {
+        const currentPath = skillIndex.get(skillName)
+        if (!currentPath) continue
+        const description = await readDescription(currentPath)
+        if (description) prompts.set(fileName, description)
+      }
+
+      return { skills, agents, prompts }
     })()
   }
 
@@ -372,19 +447,12 @@ async function isLegacyPluginOwned(
 }
 
 /**
- * Detect a stale Codex prompt wrapper by structural body fingerprint alone.
+ * Detect a stale Codex prompt wrapper using a two-signal ownership check.
  *
- * Earlier iterations also required an exact `description:` match against the
- * current plugin skill (with a `ce:` -> `ce-` normalization pass), but that
- * check was brittle: every time we reworded a workflow skill description the
- * fingerprint broke on upgrade and users were left with orphaned prompts that
- * still pointed at the pre-rename skill. The third successive review-round
- * finding on this file made it clear that continuing to chase description
- * drift with per-version alias lists is not maintainable.
- *
- * The body instruction strings below are boilerplate the converter writes
- * deterministically. They embed the exact skill name we recognize and have
- * remained stable across every Codex-producing version of the plugin:
+ * **Signal 1 — body instruction fingerprint.** The Codex converter writes
+ * the following boilerplate deterministically when emitting a prompt wrapper
+ * for an invocable command. These strings have remained stable across every
+ * Codex-producing version of the plugin:
  *
  *   - `Use the $ce-plan skill for this command and follow its instructions.`
  *     (v2.39+ command-form wrapper)
@@ -393,21 +461,47 @@ async function isLegacyPluginOwned(
  *   - `Use the ce-plan skill for this workflow and follow its instructions exactly.`
  *     (post-rename workflow-form wrapper)
  *
- * Matching on these strings alone is safe: a user-authored `ce-plan.md` prompt
- * is very unlikely to accidentally contain the exact plugin-generated sentence
- * referencing `$ce-plan` / `ce:plan` / `ce-plan` by name. If they do, the file
- * is effectively identical to what we ship and removing it leaves no user
- * content behind.
+ * The "command" form is NOT exclusive to compound-engineering. `renderPrompt`
+ * in `src/converters/claude-to-codex.ts` emits the same sentence (with a
+ * different skill name) for every plugin that ships invocable commands. A
+ * third-party plugin that happens to ship a same-named prompt wrapper (for
+ * example, a fork that keeps the `ce-*` namespace) would produce a wrapper
+ * whose body passes this signal alone.
+ *
+ * **Signal 2 — description ownership.** To avoid deleting another plugin's
+ * wrapper out of a shared `~/.codex/prompts/` directory, we additionally
+ * require the frontmatter `description:` to match either (a) the current
+ * shipped description of the corresponding compound-engineering skill, or
+ * (b) one of the historical descriptions we have shipped in a prior release
+ * (`LEGACY_PROMPT_DESCRIPTION_ALIASES`). A wrapper with our body fingerprint
+ * but a description that has never appeared in any compound-engineering
+ * release is treated as NOT ours.
+ *
+ * Trade-off: adding a new release that reworks a prompt-related skill's
+ * description means backfilling the previous description into the alias map
+ * so upgrades from that version still clean up cleanly. Missing that backfill
+ * only strands one orphan wrapper on upgrade (mild); matching too broadly
+ * would delete a sibling plugin's file (destructive). Err on the side of
+ * omission.
  */
-async function isLegacyPromptWrapper(targetPath: string): Promise<boolean> {
+async function isLegacyPromptWrapper(
+  targetPath: string,
+  currentPromptDescription: string | undefined,
+): Promise<boolean> {
   try {
     const raw = await fs.readFile(targetPath, "utf8")
-    const { body } = parseFrontmatter(raw, targetPath)
+    const { data, body } = parseFrontmatter(raw, targetPath)
+    const fileName = path.basename(targetPath)
 
-    return promptSkillNamesForLegacy(path.basename(targetPath)).some((skillName) =>
+    const bodyMatches = promptSkillNamesForLegacy(fileName).some((skillName) =>
       body.includes(`Use the $${skillName} skill for this command and follow its instructions.`)
       || body.includes(`Use the ${skillName} skill for this workflow and follow its instructions exactly.`)
     )
+    if (!bodyMatches) return false
+
+    const actualDescription = typeof data.description === "string" ? data.description : null
+    const historicalAliases = LEGACY_PROMPT_DESCRIPTION_ALIASES[fileName] ?? []
+    return descriptionsMatch(actualDescription, currentPromptDescription, historicalAliases)
   } catch {
     return false
   }
@@ -510,16 +604,20 @@ export async function cleanupStaleAgents(
  * Remove stale prompt wrapper files.
  * Only applies to targets that used to generate workflow prompt wrappers (Codex).
  *
- * Ownership is proved by the body instruction fingerprint (see
- * `isLegacyPromptWrapper`), not by the YAML description. Description text has
- * been reworded multiple times across released plugin versions and was already
- * responsible for three successive upgrade-cleanup regressions on this file.
+ * Ownership uses the two-signal check documented on `isLegacyPromptWrapper`:
+ * the body must contain one of the compound-engineering-specific instruction
+ * sentences AND the frontmatter description must match either the current
+ * shipped description of the corresponding ce-* skill or a known historical
+ * alias. This prevents deleting a sibling plugin's same-named wrapper from a
+ * shared `~/.codex/prompts/` directory when both plugins happen to use the
+ * `ce-*` namespace.
  */
 export async function cleanupStalePrompts(promptsDir: string): Promise<number> {
+  const { prompts } = await loadLegacyFingerprints()
   let removed = 0
   for (const file of STALE_PROMPT_FILES) {
     const targetPath = path.join(promptsDir, file)
-    if (!(await isLegacyPromptWrapper(targetPath))) continue
+    if (!(await isLegacyPromptWrapper(targetPath, prompts.get(file)))) continue
     if (await removeIfExists(targetPath)) removed++
   }
   return removed
