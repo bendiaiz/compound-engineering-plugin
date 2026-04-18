@@ -152,7 +152,7 @@ This plugin is authored once, then converted for other agent platforms. Commands
 
 - [ ] Because of that, slash references inside command or agent content are acceptable when they point to real published commands; target-specific conversion can remap them.
 - [ ] Inside a pass-through `SKILL.md`, do not assume slash references will be remapped for another platform. Write references according to what will still make sense after the skill is copied as-is.
-- [ ] When one skill refers to another skill, prefer semantic wording such as "load the `document-review` skill" rather than slash syntax.
+- [ ] When one skill refers to another skill, prefer semantic wording such as "load the `ce-doc-review` skill" rather than slash syntax.
 - [ ] Use slash syntax only when referring to an actual published command or workflow such as `/ce-work` or `/ce-compound`.
 
 ### Tool Selection in Agents and Skills

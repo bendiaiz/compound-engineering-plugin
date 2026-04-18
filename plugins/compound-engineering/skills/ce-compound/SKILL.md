@@ -3,7 +3,7 @@ name: ce-compound
 description: Document a recently solved problem to compound your team's knowledge
 ---
 
-# /compound
+# /ce-compound
 
 Coordinate multiple subagents working in parallel to document a recently solved problem.
 
@@ -358,7 +358,7 @@ a brief mention helps all agents discover these learnings.
 
 Note: This was created in lightweight mode. For richer documentation
 (cross-references, detailed prevention strategies, specialized reviews),
-re-run /compound in a fresh session.
+re-run /ce-compound in a fresh session.
 ```
 
 **No subagents are launched. No parallel tasks. One file written.**
