@@ -11,7 +11,7 @@ Interactive mode only.
 The walk-through receives, from the orchestrator:
 
 - The merged findings list in severity order (P0 → P1 → P2 → P3), filtered to `gated_auto` and `manual` findings that survived the Stage 5 confidence gate. Advisory findings are included when they were surfaced to this phase (advisory findings normally live in the report-only queue, but when the review flow routes them here for acknowledgment they take the advisory variant below).
-- The cached tracker-detection tuple from `tracker-defer.md` (`{ tracker_name, confidence, sink_available }`). Determines whether the Defer option is offered and how it is labeled.
+- The cached tracker-detection tuple from `tracker-defer.md` (`{ tracker_name, confidence, named_sink_available, any_sink_available }`). `any_sink_available` determines whether the Defer option is offered; `named_sink_available` + `confidence` determine whether the label names the tracker inline.
 - The run id for artifact lookups.
 
 Each finding's recommended action has already been normalized by Stage 5 (step 7b — tie-break on action). The walk-through surfaces that recommendation to the user but does not recompute it.
@@ -62,7 +62,7 @@ The menu's "recommended" option reflects the orchestrator's per-finding recommen
 
 - **Advisory-only finding:** when the finding's `autofix_class` is `advisory` (no actionable fix), option A is replaced with `Acknowledge — mark as reviewed`. The other three options remain. The advisory variant is the only case where `Acknowledge` appears in the menu.
 - **N=1 (exactly one pending finding):** the stem wording shifts from `Finding N of M` to simply describing the single finding. Option D (`LFG the rest`) is suppressed because no subsequent findings exist — the menu shows three options: Apply / Defer / Skip (or Acknowledge, for advisory).
-- **No-sink (Defer option unavailable):** when the tracker-detection tuple reports `sink_available: false` AND no harness fallback is available, option B (`Defer`) is omitted. The stem appends one line explaining why (e.g., `Defer unavailable on this platform — no tracker or task-tracking primitive detected.`). The menu shows three options: Apply / Skip / LFG the rest (and Acknowledge in place of Apply for advisory-only findings).
+- **No-sink (Defer option unavailable):** when the tracker-detection tuple reports `any_sink_available: false` (every tier in the fallback chain — named tracker, GitHub Issues, harness primitive — is unreachable), option B (`Defer`) is omitted. The stem appends one line explaining why (e.g., `Defer unavailable on this platform — no tracker or task-tracking primitive detected.`). The menu shows three options: Apply / Skip / LFG the rest (and Acknowledge in place of Apply for advisory-only findings).
 - **Combined N=1 + no-sink:** the menu shows two options: Apply / Skip (or Acknowledge / Skip).
 
 When no blocking question tool is available on the platform, present the options as a numbered list and wait for the user's next reply.

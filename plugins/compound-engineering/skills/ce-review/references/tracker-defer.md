@@ -10,16 +10,17 @@ Interactive mode only. Autofix, Report-only, and Headless modes do not use this 
 
 The agent determines the project's tracker from whatever documentation is obvious. Primary sources: `CLAUDE.md` and `AGENTS.md` at the repo root and in relevant subdirectories. Supplementary signals (when primary documentation is ambiguous): `CONTRIBUTING.md`, `README.md`, PR templates under `.github/`, visible tracker URLs in the repo.
 
-A tracker can be surfaced via MCP tool (e.g., a Linear MCP server), CLI (e.g., `gh`), or direct API. All are acceptable. The detection output is a tuple:
+A tracker can be surfaced via MCP tool (e.g., a Linear MCP server), CLI (e.g., `gh`), or direct API. All are acceptable. The detection output is a tuple with two availability flags — one for the named tracker specifically (drives label confidence) and one for the full fallback chain (drives whether Defer is offered at all):
 
 ```
-{ tracker_name, confidence, sink_available }
+{ tracker_name, confidence, named_sink_available, any_sink_available }
 ```
 
 Where:
 - `tracker_name` — human-readable name ("Linear", "GitHub Issues", "Jira"), or `null` when detection cannot identify a specific tracker
 - `confidence` — `high` when the tracker is named explicitly in documentation (or via a linked URL to a specific project/workspace) and is unambiguously the project's canonical tracker; `low` when the signal is thin, conflicting, or implied only
-- `sink_available` — `true` only when the agent can actually invoke the detected tracker (MCP tool is loaded, CLI is authenticated, or API credentials are in environment); `false` when the tracker is documented but no tool reaches it, or when no tracker is found at all
+- `named_sink_available` — `true` only when the agent can actually invoke the detected tracker (MCP tool is loaded, CLI is authenticated, or API credentials are in environment); `false` when the tracker is documented but no tool reaches it, or when no tracker is found at all. Drives label confidence: inline tracker naming requires this to be `true`.
+- `any_sink_available` — `true` when any tier in the fallback chain (named tracker, GitHub Issues via `gh`, or harness task-tracking primitive) can be invoked this session. Drives whether Defer is offered: no-sink behavior fires only when this is `false`.
 
 Detection is reasoning-based. Do not maintain an enumerated checklist of files to read. Read the obvious sources and form a confident conclusion; when the obvious sources don't resolve, the label falls back to generic wording and the agent confirms with the user before executing.
 
@@ -27,23 +28,27 @@ Detection is reasoning-based. Do not maintain an enumerated checklist of files t
 
 ## Probe timing and caching
 
-Availability probes run **at most once per session** and **only when the routing question is about to be asked**. Never speculatively at review start, never per-Defer, never per-walk-through-finding. The cached `{ tracker_name, confidence, sink_available }` tuple is reused for every Defer action in the same run.
+Availability probes run **at most once per session** and **only when the routing question is about to be asked**. Never speculatively at review start, never per-Defer, never per-walk-through-finding. The cached tuple is reused for every Defer action in the same run.
 
-Typical probe sequence (for the high-confidence named-tracker path):
+Typical probe sequence:
 
 1. Read `CLAUDE.md` / `AGENTS.md` for tracker references. If nothing found, set `tracker_name = null`, `confidence = low`.
-2. If a named tracker is found, check its sink availability once — for GitHub Issues, run `gh auth status` and `gh repo view --json hasIssuesEnabled`. For Linear or other MCP-backed trackers, verify the relevant MCP tool is loaded and responsive. For API-backed trackers, verify credentials in environment.
-3. Set `sink_available = true` only if the probe returns a working tool. If the probe fails or times out, set `sink_available = false` for this session and fall through to the next tier of the fallback chain below.
+2. **Probe the named tracker when one was found.** For GitHub Issues, run `gh auth status` and `gh repo view --json hasIssuesEnabled`. For Linear or other MCP-backed trackers, verify the relevant MCP tool is loaded and responsive. For API-backed trackers, verify credentials in environment. Set `named_sink_available` from the probe result.
+3. **Probe the fallback tiers to compute `any_sink_available`.** Even when the named tracker was found and probed, the fallback tiers matter for the "no-sink" decision so that a run with no documented tracker but working `gh` still offers Defer. Stop at the first working tier:
+   - If `named_sink_available = true`: `any_sink_available = true` (no further probes needed).
+   - Otherwise, probe GitHub Issues via `gh auth status` + `gh repo view --json hasIssuesEnabled` (skip if already probed in step 2). If it works, `any_sink_available = true`.
+   - Otherwise, check the harness task-tracking primitive. `TaskCreate` / `update_plan` are typically always present when the skill runs inside their harness — treat as available unless the session is in a context that explicitly forbids it (e.g., converted targets without task binding).
+   - If every tier fails, `any_sink_available = false`.
 
-When the routing question is skipped entirely (R2 zero-findings case), no probes run. When option C is omitted because no sink is available (R20), the agent still needs to know *why* in order to explain — so the detection tuple is computed even when option C won't appear, but it reads from documentation only and skips availability probes that would spawn tool calls.
+When the routing question is skipped entirely (R2 zero-findings case), no probes run. When the cached tuple is reused across a session, any `named_sink_available = true` from the session's first probe stays cached — do not re-probe per Defer.
 
 ---
 
 ## Label logic
 
-- When `confidence = high` AND `sink_available = true`: the routing question's option C and the walk-through's per-finding Defer option both include the tracker name verbatim. Example: `File a Linear ticket per finding`, `Defer — file a Linear ticket`.
-- When `confidence = low` OR `sink_available = false` but a fallback sink exists: the labels read generically — `File an issue per finding`, `Defer — file a ticket`. Before executing the first Defer of the session, the agent confirms the tracker choice with the user using the platform's blocking question tool.
-- When `sink_available = false` AND no fallback sink is available: option C is omitted from the routing question, option B (Defer) is omitted from the walk-through per-finding options, and the agent tells the user why in the routing question's stem.
+- When `confidence = high` AND `named_sink_available = true`: the routing question's option C and the walk-through's per-finding Defer option both include the tracker name verbatim. Example: `File a Linear ticket per finding`, `Defer — file a Linear ticket`.
+- When `any_sink_available = true` but either `confidence = low` or `named_sink_available = false` (a fallback tier is working instead): the labels read generically — `File an issue per finding`, `Defer — file a ticket`. Before executing the first Defer of the session, the agent confirms the effective tracker choice with the user using the platform's blocking question tool.
+- When `any_sink_available = false`: option C is omitted from the routing question, option B (Defer) is omitted from the walk-through per-finding options, and the agent tells the user why in the routing question's stem.
 
 ---
 
@@ -104,7 +109,7 @@ Options:
 - `Fall back to next sink` — move this finding's Defer to the next tier in the fallback chain (e.g., from Linear to GitHub Issues, or from GitHub Issues to harness task primitive)
 - `Convert to Skip — record the failure` — abandon this Defer, note the failure in the completion report's failure section, and continue the walk-through or bulk flow
 
-When a high-confidence named tracker fails at execution, the cached `sink_available` for that tracker is set to `false` for the rest of the session. Subsequent Defer actions that would target the same tracker fall straight through to the next tier without retrying a confirmed-broken sink.
+When a high-confidence named tracker fails at execution, the cached `named_sink_available` is set to `false` for the rest of the session. Subsequent Defer actions fall straight through to the next tier without retrying a confirmed-broken sink. `any_sink_available` is only downgraded to `false` when every tier has been confirmed broken — a failed Linear call that succeeds via `gh` keeps `any_sink_available = true`.
 
 When no blocking question tool is available, the agent presents numbered options and waits for the user's reply.
 
