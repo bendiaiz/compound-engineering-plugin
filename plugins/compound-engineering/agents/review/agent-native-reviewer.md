@@ -2,7 +2,7 @@
 name: agent-native-reviewer
 description: "Reviews code to ensure agent-native parity -- any action a user can take, an agent can also take. Use after adding UI features, agent tools, or system prompts."
 model: inherit
-color: cyan
+color: blue
 tools: Read, Grep, Glob, Bash
 ---
 
