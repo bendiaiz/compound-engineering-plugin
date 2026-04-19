@@ -9,6 +9,7 @@
     "dev": "tsc --watch",
     "test": "jest",
     "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "format": "prettier --write src/**/*.ts",
@@ -35,8 +36,7 @@
   "dependencies": {
     "zod": "^3.22.4"
   },
-  "devDependencies": {
-    "@types/jest": "^29.5.11",
+  "devDependencies": 11",
     "@types/node": "^20.11.0",
     "@typescript-eslint/eslint-plugin": "^6.18.1",
     "@typescript-eslint/parser": "^6.18.1",
@@ -51,7 +51,12 @@
     "preset": "ts-jest",
     "testEnvironment": "node",
     "testMatch": ["**/__tests__/**/*.ts", "**/*.test.ts"],
-    "collectCoverageFrom": ["src/**/*.ts", "!src/**/*.d.ts"]
+    "collectCoverageFrom": ["src/**/*.ts", "!src/**/*.d.ts"],
+    "coverageThreshold": {
+      "global": {
+        "lines": 70
+      }
+    }
   },
   "engines": {
     "node": ">=18.0.0"
