@@ -1,25 +1,22 @@
-#!/usr/bin/env bun
-import { defineCommand, runMain } from "citty"
-import packageJson from "../package.json"
-import convert from "./commands/convert"
-import install from "./commands/install"
-import listCommand from "./commands/list"
-import pluginPath from "./commands/plugin-path"
-import sync from "./commands/sync"
+/**
+ * compound-engineering-plugin
+ * Core entry point for the Compound Engineering Plugin
+ * Provides utilities for PR triage, code review automation, and engineering workflows
+ */
 
-const main = defineCommand({
-  meta: {
-    name: "compound-plugin",
-    version: packageJson.version,
-    description: "Convert Claude Code plugins into other agent formats",
-  },
-  subCommands: {
-    convert: () => convert,
-    install: () => install,
-    list: () => listCommand,
-    "plugin-path": () => pluginPath,
-    sync: () => sync,
-  },
-})
+export { triagePRs } from './commands/triage-prs';
+export { getConfig } from './config';
+export type { PluginConfig, PRTriageOptions, PRSummary } from './types';
 
-runMain(main)
+import { getConfig } from './config';
+
+/**
+ * Initialize the plugin with optional configuration overrides
+ */
+export async function init(configOverrides?: Partial<import('./types').PluginConfig>): Promise<void> {
+  const config = await getConfig(configOverrides);
+
+  if (config.debug) {
+    console.log('[compound-engineering-plugin] Initialized with config:', JSON.stringify(config, null, 2));
+  }
+}
