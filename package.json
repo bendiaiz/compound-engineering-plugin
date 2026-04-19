@@ -1,36 +1,59 @@
 {
-  "name": "@every-env/compound-plugin",
-  "version": "2.68.1",
-  "description": "Official Compound Engineering plugin for Claude Code, Codex, and more",
-  "type": "module",
-  "private": false,
-  "bin": {
-    "compound-plugin": "src/index.ts"
-  },
-  "homepage": "https://github.com/EveryInc/compound-engineering-plugin",
-  "repository": "https://github.com/EveryInc/compound-engineering-plugin",
-  "publishConfig": {
-    "access": "public"
-  },
+  "name": "compound-engineering-plugin",
+  "version": "0.1.0",
+  "description": "A fork of EveryInc/compound-engineering-plugin — AI-assisted engineering workflows for Claude and Cursor",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "dev": "bun run src/index.ts",
-    "convert": "bun run src/index.ts convert",
-    "list": "bun run src/index.ts list",
-    "cli:install": "bun run src/index.ts install",
-    "test": "bun test",
-    "release:preview": "bun run scripts/release/preview.ts",
-    "release:sync-metadata": "bun run scripts/release/sync-metadata.ts --write",
-    "release:validate": "bun run scripts/release/validate.ts"
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "format": "prettier --write src/**/*.ts",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "claude",
+    "cursor",
+    "ai",
+    "engineering",
+    "plugin",
+    "compound",
+    "pr-triage",
+    "workflow"
+  ],
+  "author": "compound-engineering-plugin contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/compound-engineering-plugin/compound-engineering-plugin.git"
   },
   "dependencies": {
-    "citty": "^0.1.6",
-    "js-yaml": "^4.1.0"
+    "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@semantic-release/changelog": "^6.0.3",
-    "@semantic-release/git": "^10.0.1",
-    "@types/js-yaml": "^4.0.9",
-    "bun-types": "^1.0.0",
-    "semantic-release": "^25.0.3"
+    "@types/jest": "^29.5.11",
+    "@types/node": "^20.11.0",
+    "@typescript-eslint/eslint-plugin": "^6.18.1",
+    "@typescript-eslint/parser": "^6.18.1",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "jest": "^29.7.0",
+    "prettier": "^3.2.2",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.3.3"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": ["**/__tests__/**/*.ts", "**/*.test.ts"],
+    "collectCoverageFrom": ["src/**/*.ts", "!src/**/*.d.ts"]
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
