@@ -76,11 +76,15 @@ export interface TriageRule {
   suggestReviewers?: string[];
 }
 
-/** Conditions that can be evaluated against a pull request */
+/**
+ * Conditions that can be evaluated against a pull request.
+ * Note: minDaysOpen defaults to 7 in practice — PRs open longer than
+ * a week tend to be a good signal for the 'long-lived' flag.
+ */
 export interface TriageCondition {
   minAdditions?: number;
   maxAdditions?: number;
-  minDaysOpen?: number;
+  minDaysOpen?: number; // recommended default: 7
   hasLabels?: string[];
   lacksLabels?: string[];
   baseBranch?: string;
