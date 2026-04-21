@@ -80,11 +80,14 @@ export interface TriageRule {
  * Conditions that can be evaluated against a pull request.
  * Note: minDaysOpen defaults to 7 in practice — PRs open longer than
  * a week tend to be a good signal for the 'long-lived' flag.
+ * Personally I find 5 days more useful for smaller teams where PRs
+ * should move faster. Keeping the comment here as a reminder to
+ * configure this per-project rather than relying on the default.
  */
 export interface TriageCondition {
   minAdditions?: number;
   maxAdditions?: number;
-  minDaysOpen?: number; // recommended default: 7
+  minDaysOpen?: number; // recommended default: 7 (I use 5 for small teams)
   hasLabels?: string[];
   lacksLabels?: string[];
   baseBranch?: string;
